@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════
-   ElevateMe — Shared JavaScript v2.1 (FINAL)
+   ElevateMe — Shared JavaScript v2.2 (AUDIT FIXED)
    Supabase-powered progress tracking
    Updated: April 2026
 ═══════════════════════════════════════ */
@@ -11,7 +11,8 @@ const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 const _sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const IS_ADMIN_PARAM = new URLSearchParams(location.search).get('admin') === 'true';
-const ADMIN_EMAILS = ['support@elevateme.pro', 'divina.r@elevateme.pro', 'aman.p@elevateme.pro', 'Aman.P@elevateme.pro'];
+// FIX 3: Centralized lowercase email list
+const ADMIN_EMAILS = ['support@elevateme.pro', 'divina.r@elevateme.pro', 'aman.p@elevateme.pro'];
 
 let currentUser = null;
 let completed   = {};
@@ -24,12 +25,11 @@ async function initAuth() {
     
     currentUser = session.user;
 
-    // Add admin styling if the user is in the VIP list
-    if (ADMIN_EMAILS.includes(currentUser.email)) {
+    // FIX 3: Normalize comparison to lowercase
+    if (ADMIN_EMAILS.includes(currentUser.email.toLowerCase())) {
         document.body.classList.add('is-admin');
     }
 
-    // Ensure profile exists and update last login
     await _sb.from('profiles').upsert({
         id: currentUser.id, 
         email: currentUser.email,
@@ -50,7 +50,6 @@ async function loadProgress() {
 async function saveModuleProgress(moduleId, isComplete) {
     if (!currentUser) return;
     
-    // 1. Save individual module status
     if (isComplete) {
         await _sb.from('progress').upsert({
             user_id: currentUser.id, 
@@ -61,7 +60,6 @@ async function saveModuleProgress(moduleId, isComplete) {
         await _sb.from('progress').delete().eq('user_id', currentUser.id).eq('module_id', moduleId);
     }
     
-    // 2. Sync percentage to the Profiles table for Admin view
     await syncWeekProgress();
 }
 
@@ -72,7 +70,6 @@ async function syncWeekProgress() {
     const done  = window.WEEK_MODULES.filter(m => completed[m.id]).length;
     const pct   = total ? Math.round((done / total) * 100) : 0;
     
-    // Update the specific week column (e.g., week1_progress)
     const update = { id: currentUser.id };
     update[`week${window.WEEK_NUM}_progress`] = pct;
     
@@ -95,7 +92,6 @@ function markModuleComplete(id) {
     if (completed[id]) return;
     completed[id] = true;
     
-    // UI Updates
     document.querySelectorAll(`input[type="checkbox"][data-module="${id}"]`).forEach(cb => { cb.checked = true; });
     const bar = document.getElementById(`ctbar-${id}`);
     if (bar) bar.classList.add('done');
@@ -107,7 +103,8 @@ function markModuleComplete(id) {
     showToast('✓ Module completed!');
 }
 
-window.toggleModule = function(cb) {
+// FIX 2: Added async/await to prevent save errors
+window.toggleModule = async function(cb) {
     const id = cb.dataset.module;
     completed[id] = cb.checked;
     if (!cb.checked) delete completed[id];
@@ -117,8 +114,8 @@ window.toggleModule = function(cb) {
     const sideBtn = document.querySelector(`.sidebar-module-btn[data-module="${id}"]`);
     if (sideBtn) sideBtn.classList.toggle('done', cb.checked);
     
-    saveModuleProgress(id, cb.checked);
-    updateProgress();
+    await saveModuleProgress(id, cb.checked);
+    await updateProgress(); 
     showToast(cb.checked ? '✓ Module marked complete!' : 'Module unmarked');
 };
 
@@ -135,15 +132,6 @@ function toEmbedUrl(url) {
 
 function applyVideo(moduleId, url) {
     let wrap = document.getElementById(`vwrap-${moduleId}`);
-    if (!wrap) {
-        const urlRow = document.getElementById(`vid-input-${moduleId}`)?.closest('.lesson-video-url-row');
-        if (urlRow) {
-            wrap = document.createElement('div');
-            wrap.className = 'lesson-video-wrap';
-            wrap.id = `vwrap-${moduleId}`;
-            urlRow.parentNode.insertBefore(wrap, urlRow);
-        }
-    }
     if (!wrap) return;
     
     const embed = toEmbedUrl(url);
@@ -178,7 +166,7 @@ window.clearVideo = function(id) {
     delete videos[id];
     localStorage.setItem('em_videos', JSON.stringify(videos));
     const wrap = document.getElementById(`vwrap-${id}`);
-    if (wrap) wrap.innerHTML = `<div class="lesson-video-placeholder"><i class="fas fa-play-circle"></i><span>Video lesson coming soon</span></div>`;
+    if (wrap) wrap.innerHTML = `<div class="lesson-video-placeholder"><i class="fas fa-play-circle"></i><span>Video coming soon</span></div>`;
     const inp = document.getElementById(`vid-input-${id}`); if (inp) inp.value = '';
     showToast('Video removed');
 };
@@ -212,7 +200,8 @@ window.showModule = function(weekNum, idx) {
     if (contentEl) contentEl.scrollTop = 0;
 };
 
-function updateProgress() {
+// FIX 1: Added async and await syncWeekProgress() to ensure database updates
+async function updateProgress() {
     const modules = window.WEEK_MODULES || [];
     const total = modules.length, done = modules.filter(m => completed[m.id]).length;
     const pct = total ? Math.round(done / total * 100) : 0;
@@ -226,6 +215,8 @@ function updateProgress() {
         const cb  = document.querySelector(`input[type="checkbox"][data-module="${m.id}"]`);
         if (cb) cb.checked = !!completed[m.id];
     });
+
+    await syncWeekProgress(); // This is the crucial line that was missing!
 }
 
 function restoreVideos() {
@@ -256,7 +247,6 @@ function buildWeekPage(weekNum, modules) {
     sidebar.innerHTML = ''; content.innerHTML = '';
 
     modules.forEach((mod, idx) => {
-        // Sidebar Build
         const btn = document.createElement('button');
         btn.className = 'sidebar-module-btn';
         btn.dataset.module = mod.id; btn.dataset.idx = idx;
@@ -264,7 +254,6 @@ function buildWeekPage(weekNum, modules) {
         btn.addEventListener('click', () => showModule(weekNum, idx));
         sidebar.appendChild(btn);
 
-        // Content Build
         const dotsHTML = modules.map((_, di) => `<span class="step-dot ${di < idx ? 'done' : di === idx ? 'active' : ''}"></span>`).join('');
         const tkHTML = (mod.takeaways || []).map(t => `<li><span class="tk-bullet"><i class="fas fa-check"></i></span>${t}</li>`).join('');
         const resHTML = (mod.resources || []).map(r => `<a href="${r.url || '#'}" target="_blank" class="resource-item"><i class="fas ${r.icon}"></i>${r.label}<span class="res-tag">${r.tag}</span></a>`).join('');
@@ -272,16 +261,21 @@ function buildWeekPage(weekNum, modules) {
 
         const panel = document.createElement('div');
         panel.className = 'module-panel'; panel.id = `panel-${mod.id}`;
+        
+        // FIX 6: Conditional video wrap rendering
+        const videoSection = (mod.hasVideo !== false) ? `
+            <div class="lesson-video-wrap" id="vwrap-${mod.id}"><div class="lesson-video-placeholder"><i class="fas fa-play-circle"></i><span>Video coming soon</span></div></div>
+            <div class="lesson-video-url-row is-admin-only">
+                <input class="video-url-input" id="vid-input-${mod.id}" placeholder="Paste URL..."/>
+                <button class="btn-save-url" onclick="saveVideo('${mod.id}')">Save</button>
+            </div>` : '';
+
         panel.innerHTML = `
             <div class="lesson-step-indicator">
                 <span class="step-pill">Lesson ${idx+1} of ${modules.length}</span>
                 <div class="step-dots" style="margin-left:auto;">${dotsHTML}</div>
             </div>
-            <div class="lesson-video-wrap" id="vwrap-${mod.id}"><div class="lesson-video-placeholder"><i class="fas fa-play-circle"></i><span>Video coming soon</span></div></div>
-            <div class="lesson-video-url-row is-admin-only">
-                <input class="video-url-input" id="vid-input-${mod.id}" placeholder="Paste URL..."/>
-                <button class="btn-save-url" onclick="saveVideo('${mod.id}')">Save</button>
-            </div>
+            ${videoSection}
             <div class="lesson-notes-card">${mod.notes || ''}</div>
             <div class="takeaways-card"><ul class="takeaways-list">${tkHTML}</ul></div>
             <div class="resources-card"><div class="resources-list">${resHTML}</div></div>
