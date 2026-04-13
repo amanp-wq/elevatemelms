@@ -1,6 +1,6 @@
 const { createClient } = require('@supabase/supabase-js');
 
-const SUPABASE_URL = 'https://jlfbmawoyiwzvzklngxr.supabase.co';
+const SUPABASE_URL = 'https://vvazzmoplwfubfhllnwf.supabase.co';
 // Service role key — never expose this in frontend code
 const SERVICE_KEY  = process.env.SUPABASE_SERVICE_KEY;
 
@@ -22,7 +22,7 @@ exports.handler = async (event) => {
     const { action, email, password, full_name, user_id, calling_user_token } = body;
 
     // Verify the calling user is an admin
-    const anonClient = createClient(SUPABASE_URL, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpsZmJtYXdveWl3enZ6a2xuZ3hyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5NDI0OTMsImV4cCI6MjA4OTUxODQ5M30.JuMbxTyAhujTB4RqPiKbn5d4pxqK67EO_CTBj1xwt9o');
+    const anonClient = createClient(SUPABASE_URL, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ2YXp6bW9wbHdmdWJmaGxsbndmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwOTI1NjMsImV4cCI6MjA5MTY2ODU2M30.pZYjPTsi5Km5OpI02MQMyPEUW9eTLaCJt8cDkFzH05o');
     const { data: { user }, error: authError } = await anonClient.auth.getUser(calling_user_token);
 
     const ADMIN_EMAILS = ['support@elevateme.pro', 'divina.r@elevateme.pro', 'aman.p@elevateme.pro'];
