@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════
-   ElevateMe — Shared JavaScript v2.3 (FINAL-FINAL)
+   ElevateMe — Shared JavaScript v2.4 (TOTAL FIX)
    Supabase-powered progress tracking
    Updated: April 2026
 ═══════════════════════════════════════ */
@@ -11,7 +11,6 @@ const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 const _sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const IS_ADMIN_PARAM = new URLSearchParams(location.search).get('admin') === 'true';
-// FIX 3: Centralized lowercase email list
 const ADMIN_EMAILS = ['support@elevateme.pro', 'divina.r@elevateme.pro', 'aman.p@elevateme.pro'];
 
 let currentUser = null;
@@ -25,7 +24,6 @@ async function initAuth() {
     
     currentUser = session.user;
 
-    // FIX 3: Normalize comparison to lowercase
     if (ADMIN_EMAILS.includes(currentUser.email.toLowerCase())) {
         document.body.classList.add('is-admin');
     }
@@ -88,7 +86,6 @@ function showToast(msg) {
 }
 
 // ── MODULE INTERACTION ──
-// LAST FIX: Added async/await to ensure DB writes finish before page redirects
 async function markModuleComplete(id) {
     if (completed[id]) return;
     completed[id] = true;
@@ -101,10 +98,8 @@ async function markModuleComplete(id) {
     
     await saveModuleProgress(id, true);
     await updateProgress();
-    showToast('✓ Module completed!');
 }
 
-// FIX 2: Added async/await to prevent save errors
 window.toggleModule = async function(cb) {
     const id = cb.dataset.module;
     completed[id] = cb.checked;
@@ -175,10 +170,11 @@ window.clearVideo = function(id) {
 // ── NAVIGATION & UI ──
 const activeModule = {};
 
-window.navigateModule = function(weekNum, dir) {
+// FIX: Added async/await to navigateModule to prevent data loss on click
+window.navigateModule = async function(weekNum, dir) {
     const modules = window.WEEK_MODULES || []; if (!modules.length) return;
     const cur = activeModule[weekNum] || 0;
-    if (dir > 0) markModuleComplete(modules[cur].id);
+    if (dir > 0) await markModuleComplete(modules[cur].id);
     showModule(weekNum, Math.max(0, Math.min(modules.length - 1, cur + dir)));
 };
 
@@ -201,7 +197,6 @@ window.showModule = function(weekNum, idx) {
     if (contentEl) contentEl.scrollTop = 0;
 };
 
-// FIX 1: Added async and await syncWeekProgress() to ensure database updates
 async function updateProgress() {
     const modules = window.WEEK_MODULES || [];
     const total = modules.length, done = modules.filter(m => completed[m.id]).length;
@@ -217,7 +212,7 @@ async function updateProgress() {
         if (cb) cb.checked = !!completed[m.id];
     });
 
-    await syncWeekProgress(); // Syncing back to Supabase
+    await syncWeekProgress();
 }
 
 function restoreVideos() {
