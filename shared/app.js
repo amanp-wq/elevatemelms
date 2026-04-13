@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════
-   ElevateMe — Shared JavaScript v2.2 (AUDIT FIXED)
+   ElevateMe — Shared JavaScript v2.3 (FINAL-FINAL)
    Supabase-powered progress tracking
    Updated: April 2026
 ═══════════════════════════════════════ */
@@ -88,7 +88,8 @@ function showToast(msg) {
 }
 
 // ── MODULE INTERACTION ──
-function markModuleComplete(id) {
+// LAST FIX: Added async/await to ensure DB writes finish before page redirects
+async function markModuleComplete(id) {
     if (completed[id]) return;
     completed[id] = true;
     
@@ -98,8 +99,8 @@ function markModuleComplete(id) {
     const sideBtn = document.querySelector(`.sidebar-module-btn[data-module="${id}"]`);
     if (sideBtn) sideBtn.classList.add('done');
     
-    saveModuleProgress(id, true);
-    updateProgress();
+    await saveModuleProgress(id, true);
+    await updateProgress();
     showToast('✓ Module completed!');
 }
 
@@ -216,7 +217,7 @@ async function updateProgress() {
         if (cb) cb.checked = !!completed[m.id];
     });
 
-    await syncWeekProgress(); // This is the crucial line that was missing!
+    await syncWeekProgress(); // Syncing back to Supabase
 }
 
 function restoreVideos() {
@@ -262,7 +263,6 @@ function buildWeekPage(weekNum, modules) {
         const panel = document.createElement('div');
         panel.className = 'module-panel'; panel.id = `panel-${mod.id}`;
         
-        // FIX 6: Conditional video wrap rendering
         const videoSection = (mod.hasVideo !== false) ? `
             <div class="lesson-video-wrap" id="vwrap-${mod.id}"><div class="lesson-video-placeholder"><i class="fas fa-play-circle"></i><span>Video coming soon</span></div></div>
             <div class="lesson-video-url-row is-admin-only">
@@ -285,7 +285,7 @@ function buildWeekPage(weekNum, modules) {
                     <span class="check-box"><i class="fas fa-check"></i></span>
                     <span class="toggle-label">Mark as complete</span>
                 </label>
-                ${isLast ? `<button class="next-module-btn" onclick="markModuleComplete('${mod.id}');window.location.href='../';">Finish Week</button>` : `<button class="next-module-btn" onclick="navigateModule(${weekNum},1)">Next Lesson</button>`}
+                ${isLast ? `<button class="next-module-btn" onclick="markModuleComplete('${mod.id}').then(() => { window.location.href='../'; });">Finish Week</button>` : `<button class="next-module-btn" onclick="navigateModule(${weekNum},1)">Next Lesson</button>`}
             </div>`;
         content.appendChild(panel);
     });
