@@ -197,6 +197,12 @@ const _sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
     const { data: { session } } = await _sb.auth.getSession();
     if (!session) { window.location.href = 'login.html'; return; }
     
+    // FIX 3: Normalize admin email detection
+    const ADMIN_EMAILS = ['support@elevateme.pro', 'divina.r@elevateme.pro', 'aman.p@elevateme.pro'];
+    if (ADMIN_EMAILS.includes(session.user.email.toLowerCase())) {
+        document.body.classList.add('is-admin');
+    }
+
     // Fetch real progress from Supabase to overwrite local device storage
     const { data: profile } = await _sb.from('profiles').select('*').eq('id', session.user.id).single();
     if (profile) {
@@ -210,7 +216,6 @@ const _sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 window.signOut = async function() { await _sb.auth.signOut(); window.location.href = 'login.html'; };
 
 const IS_ADMIN = new URLSearchParams(location.search).get('admin') === 'true';
-if (IS_ADMIN) document.body.classList.add('is-admin');
 
 document.querySelectorAll('.logo-area').forEach(el => {
     el.innerHTML = '<img src="https://elevateme.pro/wp-content/themes/elevateme/assets/images/logo.svg" alt="ElevateMe" style="height:32px;width:auto;display:block;">';
@@ -251,7 +256,7 @@ function renderGrid() {
         const done   = isWeekComplete(w.n);
 
         const card = document.createElement('a');
-        card.href  = locked ? '#' : (IS_ADMIN ? `${w.url}?admin=true` : w.url);
+        card.href  = locked ? '#' : (document.body.classList.contains('is-admin') || IS_ADMIN ? `${w.url}?admin=true` : w.url);
         card.className = 'week-card' + (locked ? ' locked' : '') + (done ? ' completed' : '');
         card.innerHTML = `
             <div class="lock-badge"><i class="fas fa-lock"></i></div>
