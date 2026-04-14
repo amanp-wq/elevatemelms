@@ -9,7 +9,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
         *{margin:0;padding:0;box-sizing:border-box;font-family:'Nunito Sans',sans-serif;}
-        body{background:#f0f7f4;color:#1a1a1a;}
+        /* Page is hidden by default for security until verified */
+        body{background:#f0f7f4;color:#1a1a1a; display: none;}
 
         /* NAVBAR */
         .navbar{background:white;padding:0.8rem 2rem;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 12px rgba(0,0,0,0.05);position:sticky;top:0;z-index:100;}
@@ -148,7 +149,7 @@
 <div class="page-header">
     <div>
         <h1>Student Progress Dashboard</h1>
-        <p id="lastUpdated">Loading student data…</p>
+        <p id="lastUpdated">Verifying admin access…</p>
     </div>
     <div class="header-actions">
         <button class="btn-add" onclick="openAddModal()"><i class="fas fa-user-plus"></i> Add Student</button>
@@ -247,9 +248,6 @@ const SUPABASE_URL = 'https://vvazzmoplwfubfhllnwf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ2YXp6bW9wbHdmdWJmaGxsbndmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwOTI1NjMsImV4cCI6MjA5MTY2ODU2M30.pZYjPTsi5Km5OpI02MQMyPEUW9eTLaCJt8cDkFzH05o';
 const _sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-// FIX 3: Centralized lowercase admin list
-const ADMIN_EMAILS = ['support@elevateme.pro', 'divina.r@elevateme.pro', 'aman.p@elevateme.pro'];
-
 const WEEKS = 10;
 const WEEK_MODULES = {
     1:['w1m1','w1m2','w1m3','w1m4','w1m5'],
@@ -267,16 +265,24 @@ const WEEK_MODULES = {
 let allStudents  = [];
 let allProgress  = {};
 
-// ── AUTH CHECK ──
+// ── AUTH CHECK (SECURED) ──
 (async () => {
     const { data: { session } } = await _sb.auth.getSession();
     if (!session) { window.location.href = './login.html'; return; }
-    
-    // FIX 3: Case-insensitive admin check
-    if (!ADMIN_EMAILS.includes(session.user.email.toLowerCase())) {
-        alert('Access denied. This page is for admins only.');
-        window.location.href = './'; return;
+
+    // SECURE SERVER-SIDE CHECK
+    const res = await fetch('/.netlify/functions/admin-auth', {
+        headers: { 'x-admin-token': session.access_token }
+    });
+
+    if (!res.ok) {
+        document.body.innerHTML = '<div style="padding:4rem; text-align:center; font-family:sans-serif;"><h2>Access Denied</h2><p>Server-side verification failed. You do not have admin privileges.</p><a href="./">Return to Dashboard</a></div>';
+        document.body.style.display = 'block';
+        return;
     }
+
+    // Only reveal body and load data if verification passes
+    document.body.style.display = 'block';
     await loadData();
 })();
 
@@ -293,8 +299,9 @@ async function loadData() {
         allProgress[r.user_id][r.module_id] = r.completed_at;
     });
 
-    // FIX 3: Filter students excluding case-normalized admins
+    const ADMIN_EMAILS = ['support@elevateme.pro', 'divina.r@elevateme.pro', 'aman.p@elevateme.pro'];
     allStudents = (profiles || []).filter(p => !ADMIN_EMAILS.includes(p.email.toLowerCase()));
+    
     renderStats();
     renderTable(allStudents);
     document.getElementById('lastUpdated').textContent = `${allStudents.length} students · Updated ${new Date().toLocaleTimeString()}`;
@@ -414,7 +421,7 @@ function filterStudents() {
     renderTable(filtered);
 }
 
-// ── ADD STUDENT ──
+// ── ADMIN API helper — calls Netlify function ──
 async function adminAPI(payload) {
     const { data: { session } } = await _sb.auth.getSession();
     const res = await fetch('/.netlify/functions/admin-users', {
@@ -516,7 +523,6 @@ function closeAddModal() {
     document.getElementById('addSuccess').classList.remove('show');
     document.getElementById('newName').value = '';
     document.getElementById('newEmail').value = '';
-    // FIX 5: Password updated to 2026
     document.getElementById('newPassword').value = 'ElevateMe2026!';
 }
 
