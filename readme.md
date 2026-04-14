@@ -1,6 +1,6 @@
 # ElevateMe LMS
 
-5-week career bootcamp. Deployed on Netlify, hosted on GitHub.
+10-week career bootcamp. Deployed on Netlify, hosted on GitHub.
 
 ---
 
