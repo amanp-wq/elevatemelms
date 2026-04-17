@@ -47,6 +47,11 @@
   to   = "/week9/index.html"
   status = 200
 
+  [[redirects]]
+  from = "/*"
+  to   = "/404.html"
+  status = 404
+
 [[redirects]]
   from = "/week10"
   to   = "/week10/index.html"
