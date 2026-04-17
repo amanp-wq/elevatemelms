@@ -306,7 +306,7 @@ async function loadData() {
         allProgress[r.user_id][r.module_id] = r.completed_at;
     });
 
-    const ADMIN_EMAILS = ['support@elevateme.pro', 'divina.r@elevateme.pro', 'aman.p@elevateme.pro'];
+    const ADMIN_EMAILS = ['support@elevateme.pro', 'divina.r@elevateme.pro', 'aman.p@elevateme.pro', 'nitti.v@elevateme.pro'];
     allStudents = (profiles || []).filter(p => !ADMIN_EMAILS.includes(p.email.toLowerCase()));
     
     renderStats();
