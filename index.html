@@ -240,9 +240,20 @@ function getWeekProgress(n) {
 
 function isWeekComplete(n) { return getWeekProgress(n) >= 100; }
 
-function renderGrid() {
+async function renderGrid() {
     const grid = document.getElementById('weekGrid');
     grid.innerHTML = '';
+
+    // Always re-sync from Supabase for cross-device accuracy
+    const { data: { session } } = await _sb.auth.getSession();
+    if (session) {
+        const { data: profile } = await _sb.from('profiles').select('*').eq('id', session.user.id).single();
+        if (profile) {
+            for (let i = 1; i <= 10; i++) {
+                localStorage.setItem(`em_week${i}_progress`, profile[`week${i}_progress`] || 0);
+            }
+        }
+    }
 
     let totalPct = 0;
     WEEKS.forEach(w => { totalPct += getWeekProgress(w.n); });
