@@ -36,7 +36,7 @@ exports.handler = async (event) => {
     const { data: { user }, error: authError } = await anonClient.auth.getUser(calling_user_token);
 
     // FIX 3: Case-insensitive Admin Email list
-    const ADMIN_EMAILS = ['support@elevateme.pro', 'divina.r@elevateme.pro', 'aman.p@elevateme.pro'];
+    const ADMIN_EMAILS = ['support@elevateme.pro', 'divina.r@elevateme.pro', 'aman.p@elevateme.pro', 'nitti.v@elevateme.pro'];
     if (authError || !user || !ADMIN_EMAILS.includes(user.email.toLowerCase())) {
         return { statusCode: 403, headers, body: JSON.stringify({ error: 'Unauthorized' }) };
     }
