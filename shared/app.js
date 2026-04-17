@@ -11,7 +11,7 @@ const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 const _sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const IS_ADMIN_PARAM = new URLSearchParams(location.search).get('admin') === 'true';
-const ADMIN_EMAILS = ['support@elevateme.pro', 'divina.r@elevateme.pro', 'aman.p@elevateme.pro'];
+const ADMIN_EMAILS = ['support@elevateme.pro', 'divina.r@elevateme.pro', 'aman.p@elevateme.pro', 'nitti.v@elevateme.pro'];
 
 let currentUser = null;
 let completed   = {};
