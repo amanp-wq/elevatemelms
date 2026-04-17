@@ -271,15 +271,22 @@ let allProgress  = {};
     if (!session) { window.location.href = './login.html'; return; }
 
     // SECURE SERVER-SIDE CHECK
-    const res = await fetch('/.netlify/functions/admin-auth', {
+    let res;
+try {
+    res = await fetch('/.netlify/functions/admin-auth', {
         headers: { 'x-admin-token': session.access_token }
     });
+} catch (err) {
+    document.body.innerHTML = '<div style="padding:4rem;text-align:center;font-family:sans-serif;"><h2>Connection Error</h2><p>Could not reach the server. Please check your internet connection and try again.</p><a href="./">Return to Dashboard</a></div>';
+    document.body.style.display = 'block';
+    return;
+}
 
-    if (!res.ok) {
-        document.body.innerHTML = '<div style="padding:4rem; text-align:center; font-family:sans-serif;"><h2>Access Denied</h2><p>Server-side verification failed. You do not have admin privileges.</p><a href="./">Return to Dashboard</a></div>';
-        document.body.style.display = 'block';
-        return;
-    }
+if (!res.ok) {
+    document.body.innerHTML = '<div style="padding:4rem;text-align:center;font-family:sans-serif;"><h2>Access Denied</h2><p>You do not have admin privileges.</p><a href="./">Return to Dashboard</a></div>';
+    document.body.style.display = 'block';
+    return;
+}
 
     // Only reveal body and load data if verification passes
     document.body.style.display = 'block';
