@@ -198,7 +198,7 @@ const _sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
     if (!session) { window.location.href = 'login.html'; return; }
     
     // FIX 3: Normalize admin email detection
-    const ADMIN_EMAILS = ['support@elevateme.pro', 'divina.r@elevateme.pro', 'aman.p@elevateme.pro'];
+    const ADMIN_EMAILS = ['support@elevateme.pro', 'divina.r@elevateme.pro', 'aman.p@elevateme.pro', 'nitti.v@elevateme.pro'];
     if (ADMIN_EMAILS.includes(session.user.email.toLowerCase())) {
         document.body.classList.add('is-admin');
     }
