@@ -339,9 +339,9 @@ function formatDate(iso) {
     return d.toLocaleDateString('en-US', { month:'short', day:'numeric' });
 }
 
-function initials(email) {
-    const name = email.split('@')[0].replace(/[._]/g,' ');
-    return name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0,2);
+function initials(student) {
+    const src = student.full_name || student.email.split('@')[0].replace(/[._]/g,' ');
+    return src.split(' ').map(w => w[0]).join('').toUpperCase().slice(0,2);
 }
 
 function renderStats() {
@@ -378,7 +378,7 @@ function renderTable(students) {
         return `<tr>
             <td>
                 <div class="student-info">
-                    <div class="student-avatar">${initials(s.email)}</div>
+                    <div class="student-avatar">${initials(s)}</div>
                     <div>
                         <div class="student-name">${s.full_name || s.email.split('@')[0]}</div>
                         <div class="student-email">${s.email}</div>
