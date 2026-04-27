@@ -258,9 +258,8 @@ function buildWeekPage(weekNum, modules) {
         const panel = document.createElement('div');
         panel.className = 'module-panel'; panel.id = `panel-${mod.id}`;
         
-        const videoSection = (mod.hasVideo !== false) ? `
+         const videoSection = (mod.hasVideo !== false) ? `
             <div class="lesson-video-wrap" id="vwrap-${mod.id}"><div class="lesson-video-placeholder"><i class="fas fa-play-circle"></i><span>Video coming soon</span></div></div>` : '';
-
         panel.innerHTML = `
             <div class="lesson-step-indicator">
                 <span class="step-pill">Lesson ${idx+1} of ${modules.length}</span>
