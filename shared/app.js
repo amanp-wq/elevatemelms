@@ -259,11 +259,7 @@ function buildWeekPage(weekNum, modules) {
         panel.className = 'module-panel'; panel.id = `panel-${mod.id}`;
         
         const videoSection = (mod.hasVideo !== false) ? `
-            <div class="lesson-video-wrap" id="vwrap-${mod.id}"><div class="lesson-video-placeholder"><i class="fas fa-play-circle"></i><span>Video coming soon</span></div></div>
-            <div class="lesson-video-url-row is-admin-only">
-                <input class="video-url-input" id="vid-input-${mod.id}" placeholder="Paste URL..."/>
-                <button class="btn-save-url" onclick="saveVideo('${mod.id}')">Save</button>
-            </div>` : '';
+            <div class="lesson-video-wrap" id="vwrap-${mod.id}"><div class="lesson-video-placeholder"><i class="fas fa-play-circle"></i><span>Video coming soon</span></div></div>` : '';
 
         panel.innerHTML = `
             <div class="lesson-step-indicator">
