@@ -217,6 +217,9 @@ async function updateProgress() {
 
 function restoreVideos() {
     (window.WEEK_MODULES || []).forEach(m => {
+        // Strict guard: If module explicitly disables video layout, completely skip restoring video streams
+        if (m.hasVideo === false) return; 
+        
         if (videos[m.id]) applyVideo(m.id, videos[m.id]);
         else if (m.videoUrl) applyVideo(m.id, m.videoUrl);
     });
