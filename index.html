@@ -239,68 +239,105 @@ function getWeekProgress(n) {
 }
 
 function isWeekComplete(n) { return getWeekProgress(n) >= 100; }
+    
+let isRenderingGrid = false;
 
 async function renderGrid() {
-    const grid = document.getElementById('weekGrid');
-    grid.innerHTML = '';
+    if (isRenderingGrid) return;
+    isRenderingGrid = true;
 
-    // Always re-sync from Supabase for cross-device accuracy
-    const { data: { session } } = await _sb.auth.getSession();
-    if (session) {
-        const { data: profile } = await _sb.from('profiles').select('*').eq('id', session.user.id).single();
-        if (profile) {
-            for (let i = 1; i <= 10; i++) {
-                localStorage.setItem(`em_week${i}_progress`, profile[`week${i}_progress`] || 0);
+    try {
+        const grid = document.getElementById('weekGrid');
+        grid.innerHTML = '';
+
+        // Always re-sync from Supabase for cross-device accuracy
+        const { data: { session } } = await _sb.auth.getSession();
+
+        if (session) {
+            const { data: profile } = await _sb
+                .from('profiles')
+                .select('*')
+                .eq('id', session.user.id)
+                .single();
+
+            if (profile) {
+                for (let i = 1; i <= 10; i++) {
+                    localStorage.setItem(`em_week${i}_progress`, profile[`week${i}_progress`] || 0);
+                }
             }
         }
-    }
 
-    let totalPct = 0;
-    WEEKS.forEach(w => { totalPct += getWeekProgress(w.n); });
-    const overall = Math.round(totalPct / WEEKS.length);
-    document.getElementById('overallBar').style.width = overall + '%';
-    document.getElementById('overallPct').textContent  = overall + '%';
+        let totalPct = 0;
 
-    WEEKS.forEach((w, i) => {
-        const pct    = getWeekProgress(w.n);
-        const locked = i > 0 && !isWeekComplete(WEEKS[i-1].n);
-        const done   = isWeekComplete(w.n);
+        WEEKS.forEach(w => {
+            totalPct += getWeekProgress(w.n);
+        });
 
-        const card = document.createElement('a');
-        card.href  = locked ? '#' : (document.body.classList.contains('is-admin') || IS_ADMIN ? `${w.url}?admin=true` : w.url);
-        card.className = 'week-card' + (locked ? ' locked' : '') + (done ? ' completed' : '');
-        card.innerHTML = `
-            <div class="lock-badge"><i class="fas fa-lock"></i></div>
-            <div class="done-badge"><i class="fas fa-check"></i></div>
-            <div class="card-accent-bar"></div>
-            <div class="card-body">
-                <span class="week-num-label">Week ${w.n}</span>
-                <h3>${w.title}</h3>
-                <p>${w.desc}</p>
-                <div class="card-progress-text">${pct}% complete</div>
-                <div class="card-progress-bar"><div class="card-progress-fill" style="width:${pct}%"></div></div>
-                <div class="card-footer-row">
-                    <div class="card-meta">
-                        <span><i class="fas ${w.icon}"></i> ${w.modules} modules</span>
-                        <span><i class="fas fa-video"></i> videos</span>
+        const overall = Math.round(totalPct / WEEKS.length);
+
+        document.getElementById('overallBar').style.width = overall + '%';
+        document.getElementById('overallPct').textContent = overall + '%';
+
+        WEEKS.forEach((w, i) => {
+            const pct = getWeekProgress(w.n);
+            const locked = i > 0 && !isWeekComplete(WEEKS[i - 1].n);
+            const done = isWeekComplete(w.n);
+
+            const card = document.createElement('a');
+
+            card.href = locked
+                ? '#'
+                : (document.body.classList.contains('is-admin') || IS_ADMIN
+                    ? `${w.url}?admin=true`
+                    : w.url);
+
+            card.className = 'week-card' + (locked ? ' locked' : '') + (done ? ' completed' : '');
+
+            card.innerHTML = `
+                <div class="lock-badge"><i class="fas fa-lock"></i></div>
+                <div class="done-badge"><i class="fas fa-check"></i></div>
+                <div class="card-accent-bar"></div>
+                <div class="card-body">
+                    <span class="week-num-label">Week ${w.n}</span>
+                    <h3>${w.title}</h3>
+                    <p>${w.desc}</p>
+                    <div class="card-progress-text">${pct}% complete</div>
+                    <div class="card-progress-bar">
+                        <div class="card-progress-fill" style="width:${pct}%"></div>
                     </div>
-                    <div class="card-arrow"><i class="fas fa-arrow-right"></i></div>
+                    <div class="card-footer-row">
+                        <div class="card-meta">
+                            <span><i class="fas ${w.icon}"></i> ${w.modules} modules</span>
+                            <span><i class="fas fa-video"></i> videos</span>
+                        </div>
+                        <div class="card-arrow"><i class="fas fa-arrow-right"></i></div>
+                    </div>
                 </div>
-            </div>`;
-        if (locked) {
-            card.addEventListener('click', e => {
-                e.preventDefault();
-                const t = document.getElementById('toast');
-                document.getElementById('toastMsg').textContent = `Complete Week ${w.n - 1} first to unlock this week`;
-                t.classList.add('show');
-                setTimeout(() => t.classList.remove('show'), 2500);
-            });
-        }
-        grid.appendChild(card);
-    });
+            `;
+
+            if (locked) {
+                card.addEventListener('click', e => {
+                    e.preventDefault();
+
+                    const t = document.getElementById('toast');
+                    document.getElementById('toastMsg').textContent = `Complete Week ${w.n - 1} first to unlock this week`;
+
+                    t.classList.add('show');
+
+                    setTimeout(() => {
+                        t.classList.remove('show');
+                    }, 2500);
+                });
+            }
+
+            grid.appendChild(card);
+        });
+
+    } finally {
+        isRenderingGrid = false;
+    }
 }
 
-renderGrid();
 // Re-render when returning from a week page
 window.addEventListener('focus', renderGrid);
 window.addEventListener('storage', renderGrid);
