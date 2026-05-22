@@ -7,16 +7,10 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" href="../shared/styles.css">
     <style>
-        .dual-video-wrap { display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:1.8rem; }
-        .dual-video-wrap .lesson-video-wrap { margin-bottom:0; }
-        .dual-video-label { font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:var(--brand-teal); margin-bottom:0.4rem; }
-        .dual-video-admin-row { display:none; gap:0.5rem; margin-top:0.5rem; align-items:center; }
-        body.is-admin .dual-video-admin-row { display:flex; }
         .practice-checklist { list-style:none; margin:1rem 0; }
         .practice-checklist li { display:flex; align-items:center; gap:0.8rem; padding:0.8rem 0; border-bottom:1px solid #f0f7f4; font-size:0.9rem; font-weight:500; }
         .practice-checklist li:last-child { border-bottom:none; }
         .practice-checklist li i { width:28px; height:28px; background:var(--brand-teal); color:white; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:0.7rem; flex-shrink:0; }
-        @media(max-width:600px){ .dual-video-wrap { grid-template-columns:1fr; } }
     </style>
 </head>
 <body>
@@ -257,12 +251,10 @@ const MODULES = [
     ]
   },
   {
-    id:'w2m9', icon:'fa-headset', title:'Handling Initial Screening Calls from Recruiters', subtitle:'2 scenario videos',
-    hasVideo:false, isDualVideo:true,
-    videoUrl1:'https://drive.google.com/file/d/1TwVNF7sK9Xw1rJ6oH7AI9l0ylme4Fw4l/view?usp=sharing',
-    videoUrl2:'https://drive.google.com/file/d/1sfJkpx8Qz4ML6rBxkTVG4uP7Ck_hqMBC/view?usp=sharing',
+    id:'w2m9', icon:'fa-headset', title:'Handling Initial Screening Calls from Recruiters', subtitle:'Initial screening walkthrough',
+    hasVideo:true, videoUrl:'https://drive.google.com/file/d/1TwVNF7sK9Xw1rJ6oH7AI9l0ylme4Fw4l/view?usp=sharing',
     notes:`<p style="margin-bottom:1rem;">This module is designed to help you navigate the challenge of receiving initial screening calls from recruiters.</p>
-           <p style="margin-bottom:1rem;">There are <strong>2 videos</strong> for this module which provide you with clear guidelines and sample scripts to handle unexpected recruiter calls — whether you can reschedule or need to handle the call immediately. This will help you respond professionally and confidently in any situation.</p>
+           <p style="margin-bottom:1rem;">There are guidelines and sample scripts to handle unexpected recruiter calls — whether you can reschedule or need to handle the call immediately. This will help you respond professionally and confidently in any situation.</p>
            <div style="background:#f0f7f4;border-radius:14px;padding:1.2rem 1.4rem;">
              <p style="font-size:0.82rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--brand-teal);margin-bottom:0.7rem;"><i class="fas fa-video" style="margin-right:6px;"></i>Two Scenarios Covered</p>
              <ul class="worksheet-bullets">
@@ -299,62 +291,6 @@ const MODULES = [
 ];
 
 buildWeekPage(2, MODULES);
-
-// ── Dual video injection for module w2m9 ──
-(function(){
-    const mod = MODULES.find(m => m.isDualVideo);
-    if (!mod) return;
-    const panel = document.getElementById('panel-' + mod.id);
-    if (!panel) return;
-    const notesCard = panel.querySelector('.lesson-notes-card');
-    if (!notesCard) return;
-
-    const dualWrap = document.createElement('div');
-    dualWrap.innerHTML = `
-        <div class="dual-video-wrap">
-            <div>
-                <div class="dual-video-label"><i class="fas fa-play-circle"></i> Video 1 — Call That Can Be Rescheduled</div>
-                <div class="lesson-video-wrap" id="vwrap-${mod.id}-1">
-                    <div class="lesson-video-placeholder"><i class="fas fa-play-circle"></i><span>Scenario 1</span></div>
-                </div>
-            </div>
-            <div>
-                <div class="dual-video-label"><i class="fas fa-play-circle"></i> Video 2 — Call That Cannot Be Rescheduled</div>
-                <div class="lesson-video-wrap" id="vwrap-${mod.id}-2">
-                    <div class="lesson-video-placeholder"><i class="fas fa-play-circle"></i><span>Scenario 2</span></div>
-                </div>
-            </div>
-        </div>`;
-    notesCard.parentNode.insertBefore(dualWrap, notesCard);
-
-    function embedGDrive(wrapId, url){
-        const m = url.match(/\/file\/d\/([^/]+)/);
-        if (!m) return;
-        const w = document.getElementById(wrapId);
-        if (w) w.innerHTML = `<iframe src="https://drive.google.com/file/d/${m[1]}/preview" allowfullscreen allow="autoplay"></iframe>`;
-    }
-    embedGDrive('vwrap-' + mod.id + '-1', mod.videoUrl1);
-    embedGDrive('vwrap-' + mod.id + '-2', mod.videoUrl2);
-})();
-
-window.saveDualVideo = function(moduleId, num){
-    const inp = document.getElementById('vid-input-' + moduleId + '-' + num);
-    if (!inp || !inp.value.trim()){ showToast('Please paste a URL first'); return; }
-    const url = inp.value.trim();
-    const m = url.match(/\/file\/d\/([^/]+)/);
-    const embed = m ? 'https://drive.google.com/file/d/' + m[1] + '/preview' : url;
-    const wrap = document.getElementById('vwrap-' + moduleId + '-' + num);
-    if (wrap) wrap.innerHTML = '<iframe src="' + embed + '" allowfullscreen allow="autoplay"></iframe>';
-    showToast('Video ' + num + ' saved!');
-};
-
-window.clearDualVideo = function(moduleId, num){
-    const wrap = document.getElementById('vwrap-' + moduleId + '-' + num);
-    if (wrap) wrap.innerHTML = '<div class="lesson-video-placeholder"><i class="fas fa-play-circle"></i><span>Scenario ' + num + '</span></div>';
-    const inp = document.getElementById('vid-input-' + moduleId + '-' + num);
-    if (inp) inp.value = '';
-    showToast('Video ' + num + ' removed');
-};
 </script>
 </body>
 </html>
