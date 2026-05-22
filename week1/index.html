@@ -6,117 +6,6 @@
     <title>ElevateMe · Week 1: Foundations & Job Search</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" href="../shared/styles.css">
-    <style>
-        .wk-accordion {
-            border: 1px solid #c8e6d8;
-            border-radius: 14px;
-            overflow: hidden;
-            margin-bottom: 1rem;
-            background: #fff;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-        }
-        .wk-accordion-summary {
-            display: flex;
-            align-items: center;
-            gap: 0.8rem;
-            padding: 1rem 1.4rem;
-            cursor: pointer;
-            font-weight: 700;
-            font-size: 0.88rem;
-            color: var(--brand-teal);
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-            background: #f4faf7;
-            border-bottom: 1px solid transparent;
-            transition: all 0.2s;
-            list-style: none;
-        }
-        .wk-accordion-summary::-webkit-details-marker { display: none; }
-        .wk-accordion-summary::before {
-            content: '\f078';
-            font-family: 'Font Awesome 6 Free';
-            font-weight: 900;
-            font-size: 0.7rem;
-            transition: transform 0.25s ease;
-            margin-right: 0.2rem;
-        }
-        .wk-accordion[open] .wk-accordion-summary::before {
-            transform: rotate(180deg);
-        }
-        .wk-accordion[open] .wk-accordion-summary {
-            border-bottom-color: #c8e6d8;
-            background: #eef7f2;
-        }
-        .wk-accordion-body {
-            padding: 1.2rem 1.4rem;
-        }
-        .wk-video-wrap {
-            background: var(--brand-dark);
-            border-radius: 12px;
-            overflow: hidden;
-            aspect-ratio: 16/9;
-            width: 100%;
-            margin-bottom: 1rem;
-            position: relative;
-        }
-        .wk-video-wrap iframe {
-            position: absolute;
-            inset: 0;
-            width: 100%;
-            height: 100%;
-            border: none;
-        }
-        .wk-desc {
-            font-size: 0.88rem;
-            color: var(--text-main);
-            line-height: 1.7;
-            margin-bottom: 0.8rem;
-        }
-        .wk-link-row {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 0.6rem;
-            margin-top: 0.6rem;
-        }
-        .wk-link {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 0.45rem 1rem;
-            border-radius: 8px;
-            background: var(--bg-light);
-            border: 1px solid #edf2f0;
-            color: var(--brand-teal);
-            font-weight: 600;
-            font-size: 0.84rem;
-            text-decoration: none;
-            transition: all 0.2s;
-        }
-        .wk-link:hover {
-            border-color: var(--brand-accent);
-            background: #fff0ef;
-            color: var(--brand-accent);
-        }
-        .wk-link.accent {
-            color: var(--brand-accent);
-            border-color: #f5c6be;
-            background: #fff8f7;
-        }
-        .wk-link.accent:hover {
-            background: #fff0ef;
-        }
-        .wk-divider {
-            border: none;
-            border-top: 1px solid #edf2f0;
-            margin: 0.8rem 0;
-        }
-        .wk-intro-box {
-            background: #f0f7f4;
-            border-radius: 14px;
-            padding: 1.2rem 1.4rem;
-            margin-bottom: 1.2rem;
-        }
-    </style>
 </head>
 <body>
 
@@ -168,89 +57,10 @@ const MODULES = [
            <p style="margin-bottom:1rem;">This program is designed to enhance your technical skills and equip you with comprehensive career skills to thrive in the US job market.</p>
            <p>Each module, lesson, and activity has been crafted with your success in mind. Engage actively, challenge yourself, and don't hesitate to reach out to your support team.</p>`,
     takeaways:['This program covers both technical skills and career readiness for the US job market.','Each of the 10 weeks builds on the last — complete them in order.','Career coaches are available for 1-on-1 calls throughout the program.'],
-    action:'Explore the full Week 1 Table of Contents and familiarize yourself with all 6 modules ahead.',
+    action:'Explore the full Week 1 Table of Contents and familiarize yourself with all 5 modules ahead.',
     resources:[] },
 
-  { id:'w1m2', icon:'fa-box-open', title:'Welcome Kit and Instructions for Onboarding', subtitle:'Pre-orientation essentials', hasVideo:true,
-    videoUrl:'https://drive.google.com/file/d/10OcFpGvOVhz4_YbZOy07WB0LrGyOpL6Z/view?usp=sharing',
-    notes:`<p style="margin-bottom:1rem;">Before attending your Orientation Call, please watch the introductory videos shared in this module to understand:</p>
-           <div class="wk-intro-box">
-             <ul class="worksheet-bullets">
-               <li><i class="fas fa-check-circle"></i> How the program works</li>
-               <li><i class="fas fa-check-circle"></i> What support you will receive</li>
-               <li><i class="fas fa-check-circle"></i> How to successfully begin your job search journey with us</li>
-               <li><i class="fas fa-check-circle"></i> Steps required to move into the Marketing process</li>
-             </ul>
-           </div>
-           <p style="margin-bottom:1.2rem;">We encourage you to note down any questions while watching the videos so they can be discussed during the orientation session.</p>
-
-           <details class="wk-accordion" open>
-             <summary class="wk-accordion-summary"><i class="fas fa-video" style="margin-right:4px;"></i> 1. Introduction: Welcome, introduction and what to expect</summary>
-             <div class="wk-accordion-body">
-               <div class="wk-video-wrap">
-                 <iframe src="https://drive.google.com/file/d/10OcFpGvOVhz4_YbZOy07WB0LrGyOpL6Z/preview" allowfullscreen allow="autoplay"></iframe>
-               </div>
-               <p class="wk-desc">4 mins video — A brief walkthrough of the program, what to expect, and how to get started on the right foot.</p>
-               <div class="wk-link-row">
-                 <a href="https://drive.google.com/file/d/10OcFpGvOVhz4_YbZOy07WB0LrGyOpL6Z/view?usp=sharing" target="_blank" class="wk-link"><i class="fas fa-external-link-alt"></i> Open in New Tab</a>
-               </div>
-             </div>
-           </details>
-
-           <details class="wk-accordion">
-             <summary class="wk-accordion-summary"><i class="fas fa-clipboard-list" style="margin-right:4px;"></i> 2. Marketing Prerequisites (Job Application Process)</summary>
-             <div class="wk-accordion-body">
-               <div class="wk-video-wrap">
-                 <iframe src="https://drive.google.com/file/d/1xqUfu5fhCJVjVwqrS_Xtr4y-HcXVFqg_/preview" allowfullscreen allow="autoplay"></iframe>
-               </div>
-               <p class="wk-desc">19 mins video — Prerequisites and their submissions to move into the marketing/job application process.</p>
-               <hr class="wk-divider">
-               <p class="wk-desc"><i class="fas fa-file-download" style="color:var(--brand-teal);margin-right:6px;"></i>Marketing Prerequisites Document: Document with steps to complete prior to moving into Marketing, which is covered in the video above.</p>
-               <div class="wk-link-row">
-                 <a href="https://drive.google.com/file/d/1xqUfu5fhCJVjVwqrS_Xtr4y-HcXVFqg_/view?usp=sharing" target="_blank" class="wk-link"><i class="fas fa-external-link-alt"></i> Open Video in New Tab</a>
-                 <a href="https://docs.google.com/document/d/1oYUhsG-Hy2h01C_S_97-uA3db_-blfvCZyLsohF6YYQ/edit?usp=sharing" target="_blank" class="wk-link"><i class="fas fa-file-alt"></i> Marketing Prerequisites Document</a>
-               </div>
-             </div>
-           </details>
-
-           <details class="wk-accordion">
-             <summary class="wk-accordion-summary"><i class="fas fa-file-signature" style="margin-right:4px;"></i> 3. LinkedIn Authorisation Form</summary>
-             <div class="wk-accordion-body">
-               <p class="wk-desc">Kindly review and sign this LinkedIn authorisation form which is required for the job application process. This form authorises us to manage and optimise your LinkedIn profile as part of your job search strategy.</p>
-               <p class="wk-desc" style="background:#fff8f7;padding:0.8rem 1rem;border-radius:10px;border:1px solid #f5c6be;"><i class="fas fa-exclamation-circle" style="color:var(--brand-accent);margin-right:6px;"></i><strong>Important:</strong> This form must be completed and submitted before moving into the Marketing/job application process.</p>
-               <div class="wk-link-row">
-                 <a href="https://docs.google.com/document/d/1FdAu2FCXReUw94O2oUR7WfdGzAFy5PDaJbZZA5MW-ak/edit?usp=sharing" target="_blank" class="wk-link accent"><i class="fas fa-file-signature"></i> Open LinkedIn Authorisation Form</a>
-               </div>
-             </div>
-           </details>
-
-           <details class="wk-accordion">
-             <summary class="wk-accordion-summary"><i class="fas fa-tasks" style="margin-right:4px;"></i> 4. Assessments Overview</summary>
-             <div class="wk-accordion-body">
-               <div class="wk-video-wrap">
-                 <iframe src="https://drive.google.com/file/d/1YsGJqyrVErNXfAwcsJvYCYU2k7QVMU9l/preview" allowfullscreen allow="autoplay"></iframe>
-               </div>
-               <p class="wk-desc">10 mins video — How interviews and assessments work during the job application process.</p>
-               <hr class="wk-divider">
-               <p class="wk-desc"><i class="fas fa-file-alt" style="color:var(--brand-teal);margin-right:6px;"></i>Assessments Document: Document on why the Assessments are important, which is covered in the video above.</p>
-               <div class="wk-link-row">
-                 <a href="https://drive.google.com/file/d/1YsGJqyrVErNXfAwcsJvYCYU2k7QVMU9l/view?usp=sharing" target="_blank" class="wk-link"><i class="fas fa-external-link-alt"></i> Open Video in New Tab</a>
-                 <a href="https://docs.google.com/document/d/1TfK24tMhHu8ueXm-ldOg0c2uwOLltyZKMDE1RHpukIg/edit?tab=t.jyg3qhas0wqc#heading=h.zfsf71xwtbz8" target="_blank" class="wk-link"><i class="fas fa-file-alt"></i> Assessments Document</a>
-               </div>
-             </div>
-           </details>`,
-    takeaways:['Watch all introductory videos before your Orientation Call to understand the program flow.','Complete the LinkedIn authorisation form — it is required for the job application process.','Review the Marketing Prerequisites Document and Assessments Document carefully before proceeding.'],
-    action:'Watch all three videos, review and sign the LinkedIn authorisation form, and read through the Marketing Prerequisites and Assessments documents. Note down any questions for your orientation session.',
-    resources:[
-      {label:'Introduction Video (4 mins)', icon:'fa-play-circle', tag:'Video', url:'https://drive.google.com/file/d/10OcFpGvOVhz4_YbZOy07WB0LrGyOpL6Z/view?usp=sharing'},
-      {label:'Marketing Prerequisites Video (19 mins)', icon:'fa-play-circle', tag:'Video', url:'https://drive.google.com/file/d/1xqUfu5fhCJVjVwqrS_Xtr4y-HcXVFqg_/view?usp=sharing'},
-      {label:'LinkedIn Authorisation Form', icon:'fa-file-signature', tag:'Sign', url:'https://docs.google.com/document/d/1FdAu2FCXReUw94O2oUR7WfdGzAFy5PDaJbZZA5MW-ak/edit?usp=sharing'},
-      {label:'Marketing Prerequisites Document', icon:'fa-file-alt', tag:'Open', url:'https://docs.google.com/document/d/1oYUhsG-Hy2h01C_S_97-uA3db_-blfvCZyLsohF6YYQ/edit?usp=sharing'},
-      {label:'Assessments Overview Video (10 mins)', icon:'fa-play-circle', tag:'Video', url:'https://drive.google.com/file/d/1YsGJqyrVErNXfAwcsJvYCYU2k7QVMU9l/view?usp=sharing'},
-      {label:'Assessments Document', icon:'fa-file-alt', tag:'Open', url:'https://docs.google.com/document/d/1TfK24tMhHu8ueXm-ldOg0c2uwOLltyZKMDE1RHpukIg/edit?tab=t.jyg3qhas0wqc#heading=h.zfsf71xwtbz8'}
-    ] },
-
-  { id:'w1m3', icon:'fa-file-alt', title:'Job Search Worksheet', subtitle:'Your job search plan', hasVideo:false,
+  { id:'w1m2', icon:'fa-file-alt', title:'Job Search Worksheet', subtitle:'Your job search plan', hasVideo:false,
     notes:`<p style="margin-bottom:1rem;">Fill in the Job Search Worksheet using the link below. This is a crucial tool to organize your job search, refine your elevator pitch, update your resume, and apply for roles directly.</p>
            <div style="background:#f0f7f4;border-radius:14px;padding:1.2rem 1.4rem;margin-top:1rem;">
              <p style="font-size:0.82rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--brand-teal);margin-bottom:0.7rem;"><i class="fas fa-list-ol" style="margin-right:6px;"></i>Submission Instructions</p>
@@ -266,7 +76,7 @@ const MODULES = [
     action:'Access the Job Search Worksheet, make a copy, fill it in completely, and submit via email as FirstName_LastName_Job Search Worksheet.',
     resources:[{label:'Job Search Worksheet (Google Doc)', icon:'fa-external-link-alt', tag:'Open', url:'https://docs.google.com/document/d/1NcH2f4BqTqS2JoWHxtsw_P1-1uKN_zgE/edit?usp=sharing&ouid=106199168472763600209&rtpof=true&sd=true'}] },
 
-  { id:'w1m4', icon:'fa-calendar-alt', title:'Book a Call with your Career Coach', subtitle:'Meet Nitti & Dr. Divina', hasVideo:false,
+  { id:'w1m3', icon:'fa-calendar-alt', title:'Book a Call with your Career Coach', subtitle:'Meet Nitti & Dr. Divina', hasVideo:false,
     notes:`<p style="margin-bottom:1.2rem;">Now that you are working on the Job Search Worksheet, book your first introductory call with your Career Coach — Nitti or Dr. Divina.</p>
            <div style="display:flex;flex-wrap:wrap;gap:1.2rem;margin-bottom:1.2rem;">
              <div style="flex:1;min-width:220px;background:#f4faf7;border-radius:14px;padding:1.2rem;">
@@ -300,7 +110,7 @@ const MODULES = [
       {label:'Book with Dr. Divina – TidyCal', icon:'fa-calendar-check', tag:'Book', url:'https://tidycal.com/divinar'}
     ]},
 
-  { id:'w1m5', icon:'fa-hourglass-half', title:'Time Management', subtitle:'Eisenhower Matrix', optional:true,
+  { id:'w1m4', icon:'fa-hourglass-half', title:'Time Management', subtitle:'Eisenhower Matrix', optional:true,
     hasVideo:true,
     videoUrl:'https://drive.google.com/file/d/1rjV5RH4KRc_52AV9RaSO4cSTlJTZH8d8/view?usp=sharing',
     notes:`<p style="margin-bottom:1rem;">Highly recommended for students managing both this program and a Technical Project.</p>
@@ -316,10 +126,11 @@ const MODULES = [
     takeaways:["List all your tasks first — you can't prioritize what you haven't written down.",'The Eisenhower Box separates urgent tasks from important ones.','Working smarter with prioritization beats working longer without a plan.'],
     action:'List all your daily tasks then categorize each using the Eisenhower Box template. Share with your coach in your next call.',
     resources:[
+      
       {label:'Eisenhower Box Template', icon:'fa-th-large', tag:'Template', url:'https://docs.google.com/spreadsheets/d/1Mf2dkVrR9OidcaRCOB4Oa4vlCSCneguCo_U0IXDzbAg/edit?usp=sharing'}
     ]},
 
-  { id:'w1m6', icon:'fa-journal-whills', title:'Time Management with Planners', subtitle:'Daily planner system', optional:true,
+  { id:'w1m5', icon:'fa-journal-whills', title:'Time Management with Planners', subtitle:'Daily planner system', optional:true,
     hasVideo:true,
     videoUrl:'https://drive.google.com/file/d/1fcz1wycNOs3clzhCw59p5ZTMhs5fXLaW/view?usp=drive_link',
     notes:`<p style="margin-bottom:1rem;">Master time management using planners to visually organize your day — meet deadlines without overwhelming stress.</p>
@@ -334,6 +145,7 @@ const MODULES = [
     takeaways:['A planner externalizes your schedule so your brain can focus on doing, not remembering.','Plan your goals, submissions, to-do lists, and schedules together.','10 minutes of planning daily reduces stress significantly.'],
     action:"Download the Daily Planner Template and fill in tomorrow's schedule tonight. Include your goals, to-do list, and any deadlines.",
     resources:[
+     
       {label:'Daily Planner Template', icon:'fa-calendar-day', tag:'Template', url:'https://docs.google.com/spreadsheets/d/1wAxFn20OCpSmgpNQOlNikhwVWhbEvEOR0701LmeNxp8/edit?usp=sharing'}
     ]}
 ];
