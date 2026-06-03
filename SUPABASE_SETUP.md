@@ -77,29 +77,52 @@ CREATE POLICY "Users can delete own progress"
     ON progress FOR DELETE USING (auth.uid() = user_id);
 
 -- ADMIN POLICY — admins can read ALL profiles and progress
--- Replace the emails below with your actual admin emails
+-- Now reads from the admins table instead of hardcoded emails
 CREATE POLICY "Admins can read all profiles"
     ON profiles FOR SELECT
     USING (
-        auth.jwt() ->> 'email' IN (
-            'support@elevateme.pro',
-            'divina.r@elevateme.pro'
-        )
+        EXISTS (SELECT 1 FROM admins WHERE admins.email = auth.jwt() ->> 'email')
     );
 
 CREATE POLICY "Admins can read all progress"
     ON progress FOR SELECT
     USING (
-        auth.jwt() ->> 'email' IN (
-            'support@elevateme.pro',
-            'divina.r@elevateme.pro'
-        )
+        EXISTS (SELECT 1 FROM admins WHERE admins.email = auth.jwt() ->> 'email')
     );
 
 -- INDEXES for performance with 50+ students
 CREATE INDEX IF NOT EXISTS idx_progress_user_id ON progress(user_id);
 CREATE INDEX IF NOT EXISTS idx_progress_module_id ON progress(module_id);
 CREATE INDEX IF NOT EXISTS idx_profiles_email ON profiles(email);
+
+-- ADMINS TABLE
+-- Stores admin email addresses so you can add/remove admins from the Supabase dashboard
+-- without changing any code. All admin checks now read from this table.
+CREATE TABLE IF NOT EXISTS admins (
+    id       UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    email    TEXT UNIQUE NOT NULL,
+    added_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Enable RLS so only authenticated users can read (admins need to be checked by the backend)
+ALTER TABLE admins ENABLE ROW LEVEL SECURITY;
+
+-- Allow anyone authenticated to read the admins table (needed for client-side admin checks)
+CREATE POLICY "Authenticated users can read admins"
+    ON admins FOR SELECT
+    USING (auth.role() = 'authenticated');
+
+-- Allow service role full access (for Netlify functions)
+CREATE POLICY "Service role full access"
+    ON admins FOR ALL
+    USING (true);
+
+-- Insert your initial admin emails
+INSERT INTO admins (email) VALUES
+    ('support@elevateme.pro'),
+    ('divina.r@elevateme.pro'),
+    ('aman.p@elevateme.pro'),
+    ('nitti.v@elevateme.pro');
 ```
 
 4. You should see **Success. No rows returned.** — this means it worked.

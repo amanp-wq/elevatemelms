@@ -11,11 +11,32 @@ const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 const _sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const IS_ADMIN_PARAM = new URLSearchParams(location.search).get('admin') === 'true';
-const ADMIN_EMAILS = ['support@elevateme.pro', 'divina.r@elevateme.pro', 'aman.p@elevateme.pro', 'nitti.v@elevateme.pro'];
+
+// Admin emails are now loaded from Supabase 'admins' table (no code changes needed to add/remove admins)
+// Fallback list is only used if the database query fails
+const FALLBACK_ADMIN_EMAILS = ['support@elevateme.pro', 'divina.r@elevateme.pro', 'aman.p@elevateme.pro', 'nitti.v@elevateme.pro'];
+let ADMIN_EMAILS = [...FALLBACK_ADMIN_EMAILS];
 
 let currentUser = null;
 let completed   = {};
 let videos      = JSON.parse(localStorage.getItem('em_videos') || '{}');
+
+// ── LOAD ADMINS FROM DATABASE ──
+async function loadAdmins() {
+    try {
+        const { data, error } = await _sb.from('admins').select('email');
+        if (data && data.length > 0) {
+            ADMIN_EMAILS = data.map(r => r.email.toLowerCase());
+        }
+    } catch (e) {
+        // If query fails (e.g. table not yet created), use fallback list
+        console.warn('Could not load admins from database, using fallback list.', e);
+    }
+}
+
+function isAdmin(email) {
+    return ADMIN_EMAILS.includes(email.toLowerCase()) || IS_ADMIN_PARAM;
+}
 
 // ── AUTH GUARD ──
 async function initAuth() {
@@ -24,7 +45,10 @@ async function initAuth() {
     
     currentUser = session.user;
 
-    if (ADMIN_EMAILS.includes(currentUser.email.toLowerCase())) {
+    // Load admin list from Supabase before checking
+    await loadAdmins();
+
+    if (isAdmin(currentUser.email)) {
         document.body.classList.add('is-admin');
     }
 

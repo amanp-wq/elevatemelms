@@ -265,6 +265,25 @@ const WEEK_MODULES = {
 let allStudents  = [];
 let allProgress  = {};
 
+// ── LOAD ADMINS FROM DATABASE ──
+const FALLBACK_ADMIN_EMAILS = ['support@elevateme.pro', 'divina.r@elevateme.pro', 'aman.p@elevateme.pro', 'nitti.v@elevateme.pro'];
+let ADMIN_EMAILS = [...FALLBACK_ADMIN_EMAILS];
+
+async function loadAdmins() {
+    try {
+        const { data, error } = await _sb.from('admins').select('email');
+        if (data && data.length > 0) {
+            ADMIN_EMAILS = data.map(r => r.email.toLowerCase());
+        }
+    } catch (e) {
+        console.warn('Could not load admins from database, using fallback list.', e);
+    }
+}
+
+function isAdmin(email) {
+    return ADMIN_EMAILS.includes(email.toLowerCase());
+}
+
 // ── AUTH CHECK (SECURED) ──
 (async () => {
     const { data: { session } } = await _sb.auth.getSession();
@@ -290,6 +309,7 @@ if (!res.ok) {
 
     // Only reveal body and load data if verification passes
     document.body.style.display = 'block';
+    await loadAdmins();
     await loadData();
 })();
 
@@ -306,8 +326,7 @@ async function loadData() {
         allProgress[r.user_id][r.module_id] = r.completed_at;
     });
 
-    const ADMIN_EMAILS = ['support@elevateme.pro', 'divina.r@elevateme.pro', 'aman.p@elevateme.pro', 'nitti.v@elevateme.pro'];
-    allStudents = (profiles || []).filter(p => !ADMIN_EMAILS.includes(p.email.toLowerCase()));
+    allStudents = (profiles || []).filter(p => !isAdmin(p.email));
     
     renderStats();
     renderTable(allStudents);

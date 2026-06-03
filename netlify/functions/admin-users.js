@@ -3,6 +3,21 @@ const { createClient } = require('@supabase/supabase-js');
 const SUPABASE_URL = 'https://vvazzmoplwfubfhllnwf.supabase.co';
 // Service role key — never expose this in frontend code
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ2YXp6bW9wbHdmdWJmaGxsbndmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwOTI1NjMsImV4cCI6MjA5MTY2ODU2M30.pZYjPTsi5Km5OpI02MQMyPEUW9eTLaCJt8cDkFzH05o';
+const FALLBACK_ADMIN_EMAILS = ['support@elevateme.pro', 'divina.r@elevateme.pro', 'aman.p@elevateme.pro', 'nitti.v@elevateme.pro'];
+
+async function getAdminEmails() {
+    try {
+        const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        const { data, error } = await sb.from('admins').select('email');
+        if (data && data.length > 0) {
+            return data.map(r => r.email.toLowerCase());
+        }
+    } catch (e) {
+        console.warn('Could not load admins from database, using fallback list.', e);
+    }
+    return FALLBACK_ADMIN_EMAILS;
+}
 
 exports.handler = async (event) => {
     const headers = {
@@ -35,9 +50,9 @@ exports.handler = async (event) => {
     const anonClient = createClient(SUPABASE_URL, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ2YXp6bW9wbHdmdWJmaGxsbndmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwOTI1NjMsImV4cCI6MjA5MTY2ODU2M30.pZYjPTsi5Km5OpI02MQMyPEUW9eTLaCJt8cDkFzH05o');
     const { data: { user }, error: authError } = await anonClient.auth.getUser(calling_user_token);
 
-    // FIX 3: Case-insensitive Admin Email list
-    const ADMIN_EMAILS = ['support@elevateme.pro', 'divina.r@elevateme.pro', 'aman.p@elevateme.pro', 'nitti.v@elevateme.pro'];
-    if (authError || !user || !ADMIN_EMAILS.includes(user.email.toLowerCase())) {
+    // FIX 3: Load admin list from database
+    const adminEmails = await getAdminEmails();
+    if (authError || !user || !adminEmails.includes(user.email.toLowerCase())) {
         return { statusCode: 403, headers, body: JSON.stringify({ error: 'Unauthorized' }) };
     }
 
