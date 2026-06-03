@@ -166,7 +166,7 @@ function applyVideo(moduleId, url) {
     } else if (embed.includes('player.vimeo')) {
         wrap.innerHTML = `<iframe id="vm-${moduleId}" src="${embed}" allowfullscreen></iframe>`;
     } else if (embed.includes('drive.google.com')) {
-        wrap.innerHTML = `<iframe src="${embed}" allowfullscreen allow="autoplay" sandbox="allow-scripts allow-same-origin allow-popups"></iframe>`;
+        wrap.innerHTML = `<iframe src="${embed}" allowfullscreen allow="autoplay"></iframe>`;
     } else {
         const vid = document.createElement('video');
         vid.src = url; vid.controls = true; vid.muted = true; vid.autoplay = true;
