@@ -160,12 +160,13 @@ function applyVideo(moduleId, url) {
     if (!wrap) return;
     
     const embed = toEmbedUrl(url);
+    console.log(`applyVideo ${moduleId}: raw="${url}" → embed="${embed}"`);
     if (embed.includes('youtube.com/embed')) {
         wrap.innerHTML = `<iframe id="yt-${moduleId}" src="${embed}&origin=${encodeURIComponent(location.origin)}" allowfullscreen allow="autoplay"></iframe>`;
     } else if (embed.includes('player.vimeo')) {
         wrap.innerHTML = `<iframe id="vm-${moduleId}" src="${embed}" allowfullscreen></iframe>`;
     } else if (embed.includes('drive.google.com')) {
-        wrap.innerHTML = `<iframe src="${embed}" allowfullscreen></iframe>`;
+        wrap.innerHTML = `<iframe src="${embed}" allowfullscreen allow="autoplay" sandbox="allow-scripts allow-same-origin allow-popups"></iframe>`;
     } else {
         const vid = document.createElement('video');
         vid.src = url; vid.controls = true; vid.muted = true; vid.autoplay = true;
