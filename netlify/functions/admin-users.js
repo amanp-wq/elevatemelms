@@ -4,9 +4,7 @@ const SUPABASE_URL = 'https://vvazzmoplwfubfhllnwf.supabase.co';
 // Service role key — never expose this in frontend code
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ2YXp6bW9wbHdmdWJmaGxsbndmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwOTI1NjMsImV4cCI6MjA5MTY2ODU2M30.pZYjPTsi5Km5OpI02MQMyPEUW9eTLaCJt8cDkFzH05o';
-// SECURITY: Admin emails loaded from Supabase only — never hardcoded
-const FALLBACK_ADMIN_EMAILS = [];
-
+// SECURITY: Admin emails loaded from Supabase only — never hardcoded in code
 async function getAdminEmails() {
     try {
         const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -21,12 +19,12 @@ async function getAdminEmails() {
 }
 
 exports.handler = async (event) => {
-    // SECURITY: Only allow requests from your own domain (not wildcard *)
-    const allowedOrigin = (event.headers.origin || event.headers.referer || '')
-        .startsWith('https://elevatemelms.netlify.app') 
-        || (event.headers.origin || '').includes('localhost')
-        ? (event.headers.origin || 'https://elevatemelms.netlify.app')
-        : 'https://elevatemelms.netlify.app';
+    // SECURITY: Only allow requests from your own domains (not wildcard *)
+    const origin = event.headers.origin || '';
+    const isAllowed = origin.includes('elevatemelms.netlify.app')
+        || origin.includes('elevateme.pro')
+        || origin.includes('localhost');
+    const allowedOrigin = isAllowed ? origin : 'https://elevatemelms.netlify.app';
 
     const headers = {
         'Access-Control-Allow-Origin': allowedOrigin,
