@@ -427,9 +427,9 @@ function renderTable(students) {
             </td>
             <td><span class="status-badge ${status}"><i class="fas ${statusIcon[status]}" style="font-size:0.65rem;"></i>${statusMap[status]}</span></td>
             <td style="display:flex;gap:0.4rem;flex-wrap:wrap;">
-                <button class="action-btn" onclick='openDrawer(${JSON.stringify(s)})'><i class="fas fa-eye"></i> Detail</button>
-                <button class="action-btn danger" onclick="resetPassword('${s.id}','${s.email}')"><i class="fas fa-key"></i> Reset pw</button>
-                <button class="action-btn danger" onclick="deleteStudent('${s.id}','${s.email}')"><i class="fas fa-trash"></i></button>
+                <button class="action-btn" data-action="detail" data-idx="${idx}"><i class="fas fa-eye"></i> Detail</button>
+                <button class="action-btn danger" data-action="reset" data-idx="${idx}"><i class="fas fa-key"></i> Reset pw</button>
+                <button class="action-btn danger" data-action="delete" data-idx="${idx}"><i class="fas fa-trash"></i></button>
             </td>
         </tr>`;
     }).join('');
@@ -560,6 +560,19 @@ async function signOut() {
 
 // Close modal/drawer on outside click
 document.getElementById('addModal').addEventListener('click', e => { if (e.target === e.currentTarget) closeAddModal(); });
+
+// SECURITY: Event delegation for action buttons — avoids inline onclick with user data (XSS prevention)
+document.getElementById('studentTable').addEventListener('click', e => {
+    const btn = e.target.closest('.action-btn');
+    if (!btn) return;
+    const action = btn.dataset.action;
+    const idx = parseInt(btn.dataset.idx);
+    const s = allStudents[idx];
+    if (!s) return;
+    if (action === 'detail') openDrawer(s);
+    else if (action === 'reset') resetPassword(s.id, s.email);
+    else if (action === 'delete') deleteStudent(s.id, s.email);
+});
 </script>
 </body>
 </html>

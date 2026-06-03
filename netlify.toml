@@ -9,6 +9,7 @@
     X-Content-Type-Options = "nosniff"
     Referrer-Policy = "strict-origin-when-cross-origin"
     Permissions-Policy = "camera=(), microphone=(), geolocation=()"
+    Strict-Transport-Security = "max-age=63072000; includeSubDomains; preload"
     Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; img-src 'self' data: https://elevateme.pro https://*.supabase.co https://cdn.jsdelivr.net; connect-src 'self' https://*.supabase.co https://elevatemelms.netlify.app https://elevateme.pro https://drive.google.com https://docs.google.com https://accounts.google.com https://cdn.jsdelivr.net; frame-src 'self' https://www.youtube.com https://youtube.com https://player.vimeo.com https://drive.google.com https://docs.google.com;"
 
 [[redirects]]
@@ -56,12 +57,12 @@
   to   = "/week9/index.html"
   status = 200
 
-  [[redirects]]
-  from = "/*"
-  to   = "/404.html"
-  status = 404
-
 [[redirects]]
   from = "/week10"
   to   = "/week10/index.html"
   status = 200
+
+[[redirects]]
+  from = "/*"
+  to   = "/404.html"
+  status = 404

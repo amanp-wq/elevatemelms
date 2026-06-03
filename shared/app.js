@@ -214,14 +214,14 @@ function pauseVideosInPanel(panel) {
             if (src.includes('youtube.com/embed')) {
                 iframe.contentWindow.postMessage(
                     JSON.stringify({ event: 'command', func: 'pauseVideo', args: [] }),
-                    '*'
+                    'https://www.youtube.com'
                 );
             }
             // Pause Vimeo iframes via postMessage API
             else if (src.includes('player.vimeo.com')) {
                 iframe.contentWindow.postMessage(
                     JSON.stringify({ method: 'pause' }),
-                    '*'
+                    'https://player.vimeo.com'
                 );
             }
             // Google Drive / other iframes — remove and re-add src to stop playback

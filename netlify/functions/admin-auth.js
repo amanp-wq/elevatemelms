@@ -20,9 +20,10 @@ async function getAdminEmails() {
 exports.handler = async (event) => {
     // SECURITY: Only allow requests from your own domains (not wildcard *)
     const origin = event.headers.origin || '';
-    const isAllowed = origin.includes('elevatemelms.netlify.app')
-        || origin.includes('elevateme.pro')
-        || origin.includes('localhost');
+    const isAllowed = origin === 'https://elevatemelms.netlify.app'
+        || origin === 'https://elevateme.pro'
+        || origin === 'http://localhost:8888'
+        || origin === 'http://localhost:3000';
     const allowedOrigin = isAllowed ? origin : 'https://elevatemelms.netlify.app';
 
     const headers = {
@@ -43,7 +44,7 @@ exports.handler = async (event) => {
     const adminEmails = await getAdminEmails();
 
     if (error || !user || !adminEmails.includes(user.email.toLowerCase())) {
-        return { statusCode: 403, headers, body: JSON.stringify({ error: 'Forbidden' }) };
+        return { statusCode: 403, headers, body: JSON.stringify({ error: 'Access denied' }) };
     }
 
     return { statusCode: 200, headers, body: JSON.stringify({ ok: true }) };

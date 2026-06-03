@@ -21,9 +21,10 @@ async function getAdminEmails() {
 exports.handler = async (event) => {
     // SECURITY: Only allow requests from your own domains (not wildcard *)
     const origin = event.headers.origin || '';
-    const isAllowed = origin.includes('elevatemelms.netlify.app')
-        || origin.includes('elevateme.pro')
-        || origin.includes('localhost');
+    const isAllowed = origin === 'https://elevatemelms.netlify.app'
+        || origin === 'https://elevateme.pro'
+        || origin === 'http://localhost:8888'
+        || origin === 'http://localhost:3000';
     const allowedOrigin = isAllowed ? origin : 'https://elevatemelms.netlify.app';
 
     const headers = {
@@ -42,7 +43,7 @@ exports.handler = async (event) => {
         return { 
             statusCode: 500, 
             headers, 
-            body: JSON.stringify({ error: 'Server misconfigured: missing SUPABASE_SERVICE_KEY in environment variables.' }) 
+            body: JSON.stringify({ error: 'Server configuration error. Please contact support.' }) 
         };
     }
 
@@ -53,13 +54,13 @@ exports.handler = async (event) => {
     const { action, email, password, full_name, user_id, calling_user_token } = body;
 
     // Verify the calling user is an admin
-    const anonClient = createClient(SUPABASE_URL, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ2YXp6bW9wbHdmdWJmaGxsbndmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwOTI1NjMsImV4cCI6MjA5MTY2ODU2M30.pZYjPTsi5Km5OpI02MQMyPEUW9eTLaCJt8cDkFzH05o');
+    const anonClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     const { data: { user }, error: authError } = await anonClient.auth.getUser(calling_user_token);
 
     // FIX 3: Load admin list from database
     const adminEmails = await getAdminEmails();
     if (authError || !user || !adminEmails.includes(user.email.toLowerCase())) {
-        return { statusCode: 403, headers, body: JSON.stringify({ error: 'Unauthorized' }) };
+        return { statusCode: 403, headers, body: JSON.stringify({ error: 'Access denied' }) };
     }
 
     // Use service role client for admin operations
@@ -108,6 +109,6 @@ exports.handler = async (event) => {
         return { statusCode: 400, headers, body: JSON.stringify({ error: 'Unknown action' }) };
 
     } catch (err) {
-        return { statusCode: 500, headers, body: JSON.stringify({ error: err.message }) };
+        return { statusCode: 500, headers, body: JSON.stringify({ error: 'Internal server error' }) };
     }
 };

@@ -9,7 +9,7 @@
 | Who        | URL                                      |
 |------------|------------------------------------------|
 | Students   | `https://yourdomain.com`                 |
-| Admin      | `https://yourdomain.com?admin=true`      |
+| Admin      | `https://yourdomain.com/admin.html`      |
 | Week 1     | `https://yourdomain.com/week1`           |
 | Week 2     | `https://yourdomain.com/week2`           |
 
@@ -51,7 +51,7 @@ elevateme-lms/
 
 ## Update Videos (Admin)
 
-1. Open `yourdomain.com/week1?admin=true`
+1. Open `yourdomain.com/admin.html`
 2. Navigate to the module
 3. Paste YouTube / Vimeo / Google Drive / .mp4 URL
 4. Click **Save Video**
