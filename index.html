@@ -215,7 +215,7 @@ const _sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 window.signOut = async function() { await _sb.auth.signOut(); window.location.href = 'login.html'; };
 
-const IS_ADMIN = new URLSearchParams(location.search).get('admin') === 'true';
+// REMOVED: ?admin=true URL parameter bypass — security vulnerability fixed
 
 document.querySelectorAll('.logo-area').forEach(el => {
     el.innerHTML = '<img src="https://elevateme.pro/wp-content/themes/elevateme/assets/images/logo.svg" alt="ElevateMe" style="height:32px;width:auto;display:block;">';
@@ -285,11 +285,7 @@ async function renderGrid() {
 
             const card = document.createElement('a');
 
-            card.href = locked
-                ? '#'
-                : (document.body.classList.contains('is-admin') || IS_ADMIN
-                    ? `${w.url}?admin=true`
-                    : w.url);
+            card.href = locked ? '#' : w.url;
 
             card.className = 'week-card' + (locked ? ' locked' : '') + (done ? ' completed' : '');
 

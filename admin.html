@@ -220,7 +220,7 @@
         </div>
         <div class="form-group">
             <label>Temporary Password</label>
-            <input type="text" id="newPassword" placeholder="Min. 8 characters" value="ElevateMe2026!"/>
+            <input type="password" id="newPassword" placeholder="Min. 8 characters" autocomplete="new-password"/>
         </div>
         <div class="modal-error" id="addError"></div>
         <div class="modal-success" id="addSuccess"></div>
@@ -549,7 +549,7 @@ function closeAddModal() {
     document.getElementById('addSuccess').classList.remove('show');
     document.getElementById('newName').value = '';
     document.getElementById('newEmail').value = '';
-    document.getElementById('newPassword').value = 'ElevateMe2026!';
+    document.getElementById('newPassword').value = '';
 }
 
 async function signOut() {

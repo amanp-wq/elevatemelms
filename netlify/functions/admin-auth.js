@@ -19,8 +19,15 @@ async function getAdminEmails() {
 }
 
 exports.handler = async (event) => {
+    // SECURITY: Only allow requests from your own domain (not wildcard *)
+    const allowedOrigin = (event.headers.origin || event.headers.referer || '')
+        .startsWith('https://elevatemelms.netlify.app') 
+        || (event.headers.origin || '').includes('localhost')
+        ? (event.headers.origin || 'https://elevatemelms.netlify.app')
+        : 'https://elevatemelms.netlify.app';
+
     const headers = {
-        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Origin': allowedOrigin,
         'Access-Control-Allow-Headers': 'Content-Type, x-admin-token',
         'Access-Control-Allow-Methods': 'GET, OPTIONS',
         'Content-Type': 'application/json'

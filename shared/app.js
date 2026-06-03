@@ -10,7 +10,8 @@ const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 // Initializing Supabase Client
 const _sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const IS_ADMIN_PARAM = new URLSearchParams(location.search).get('admin') === 'true';
+// REMOVED: ?admin=true URL parameter bypass — was a security vulnerability.
+// Admin access is now determined ONLY by email in the admins table.
 
 // Admin emails are now loaded from Supabase 'admins' table (no code changes needed to add/remove admins)
 // Fallback list is only used if the database query fails
@@ -35,7 +36,7 @@ async function loadAdmins() {
 }
 
 function isAdmin(email) {
-    return ADMIN_EMAILS.includes(email.toLowerCase()) || IS_ADMIN_PARAM;
+    return ADMIN_EMAILS.includes(email.toLowerCase());
 }
 
 // ── AUTH GUARD ──
