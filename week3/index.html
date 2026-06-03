@@ -217,13 +217,17 @@ const MODULES = [
 buildWeekPage(3, MODULES);
 
 /* ── Dual video injection for Pre-Interview Checklist (w3m2) ── */
-(function(){
+// Wait for auth + video data to load before injecting dual videos
+function injectDualVideos() {
     const mod = MODULES.find(m => m.isDualVideo);
     if (!mod) return;
     const panel = document.getElementById('panel-' + mod.id);
     if (!panel) return;
     const notesCard = panel.querySelector('.lesson-notes-card');
     if (!notesCard) return;
+
+    // Skip if already injected
+    if (document.getElementById('vwrap-' + mod.id + '-1')) return;
 
     const dualWrap = document.createElement('div');
     dualWrap.innerHTML = `
@@ -259,7 +263,17 @@ buildWeekPage(3, MODULES);
     }
     if (moduleVideoMap[mod.id]?.url) embedDualVideo('vwrap-' + mod.id + '-1', moduleVideoMap[mod.id].url);
     if (moduleVideoMap[mod.id]?.url2) embedDualVideo('vwrap-' + mod.id + '-2', moduleVideoMap[mod.id].url2);
-})();
+}
+
+// Poll until moduleVideoMap is populated (auth + loadModuleVideos complete)
+let dualVideoAttempts = 0;
+const dualVideoTimer = setInterval(() => {
+    dualVideoAttempts++;
+    if (moduleVideoMap['w3m2'] || dualVideoAttempts > 50) {
+        clearInterval(dualVideoTimer);
+        injectDualVideos();
+    }
+}, 100);
 
 window.saveDualVideo = function(moduleId, num){
     const inp = document.getElementById('vid-input-' + moduleId + '-' + num);
