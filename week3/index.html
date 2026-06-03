@@ -29,7 +29,7 @@
         <span class="admin-badge"><i class="fas fa-shield-alt"></i> Admin Mode</span>
         <a href="../">Dashboard</a>
         <a href="#" class="active">Week 3</a>
-        <a href="../" class="btn-accent">Student Portal</a>
+        <button onclick="changePassword()" class="btn-changepw"><i class="fas fa-key"></i> Change Password</button><a href="../" class="btn-accent">Student Portal</a>
     </div>
 </nav>
 
@@ -243,24 +243,40 @@ buildWeekPage(3, MODULES);
         </div>`;
     notesCard.parentNode.insertBefore(dualWrap, notesCard);
 
-    function embedGDrive(wrapId, url){
-        const m = url.match(/\/file\/d\/([^/]+)/);
-        if (!m) return;
+    function embedDualVideo(wrapId, url){
         const w = document.getElementById(wrapId);
-        if (w) w.innerHTML = `<a href="https://drive.google.com/file/d/${m[1]}/preview" target="_blank" rel="noopener" class="video-link-btn"><i class="fas fa-play-circle"></i><span>Watch Video</span><small>Opens in new tab</small></a>`;
+        if (!w || !url) return;
+        const embed = toEmbedUrl(url);
+        if (embed.includes('youtube.com/embed')) {
+            w.innerHTML = `<iframe src="${embed}&origin=${encodeURIComponent(location.origin)}" allowfullscreen allow="autoplay"></iframe>`;
+        } else if (embed.includes('player.vimeo')) {
+            w.innerHTML = `<iframe src="${embed}" allowfullscreen></iframe>`;
+        } else if (embed.includes('drive.google.com')) {
+            w.innerHTML = `<a href="${embed}" target="_blank" rel="noopener" class="video-link-btn"><i class="fas fa-play-circle"></i><span>Watch Video</span><small>Opens in new tab</small></a>`;
+        } else {
+            w.innerHTML = `<a href="${url}" target="_blank" rel="noopener" class="video-link-btn"><i class="fas fa-play-circle"></i><span>Watch Video</span><small>Opens in new tab</small></a>`;
+        }
     }
-    if (moduleVideoMap[mod.id]?.url) embedGDrive('vwrap-' + mod.id + '-1', moduleVideoMap[mod.id].url);
-    if (moduleVideoMap[mod.id]?.url2) embedGDrive('vwrap-' + mod.id + '-2', moduleVideoMap[mod.id].url2);
+    if (moduleVideoMap[mod.id]?.url) embedDualVideo('vwrap-' + mod.id + '-1', moduleVideoMap[mod.id].url);
+    if (moduleVideoMap[mod.id]?.url2) embedDualVideo('vwrap-' + mod.id + '-2', moduleVideoMap[mod.id].url2);
 })();
 
 window.saveDualVideo = function(moduleId, num){
     const inp = document.getElementById('vid-input-' + moduleId + '-' + num);
     if (!inp || !inp.value.trim()){ showToast('Please paste a URL first'); return; }
     const url = inp.value.trim();
-    const m = url.match(/\/file\/d\/([^/]+)/);
-    const embed = m ? 'https://drive.google.com/file/d/' + m[1] + '/preview' : url;
+    const embed = toEmbedUrl(url);
     const wrap = document.getElementById('vwrap-' + moduleId + '-' + num);
-    if (wrap) wrap.innerHTML = `<a href="${embed}" target="_blank" rel="noopener" class="video-link-btn"><i class="fas fa-play-circle"></i><span>Watch Video</span><small>Opens in new tab</small></a>`;
+    if (!wrap) return;
+    if (embed.includes('youtube.com/embed')) {
+        wrap.innerHTML = `<iframe src="${embed}&origin=${encodeURIComponent(location.origin)}" allowfullscreen allow="autoplay"></iframe>`;
+    } else if (embed.includes('player.vimeo')) {
+        wrap.innerHTML = `<iframe src="${embed}" allowfullscreen></iframe>`;
+    } else if (embed.includes('drive.google.com')) {
+        wrap.innerHTML = `<a href="${embed}" target="_blank" rel="noopener" class="video-link-btn"><i class="fas fa-play-circle"></i><span>Watch Video</span><small>Opens in new tab</small></a>`;
+    } else {
+        wrap.innerHTML = `<a href="${url}" target="_blank" rel="noopener" class="video-link-btn"><i class="fas fa-play-circle"></i><span>Watch Video</span><small>Opens in new tab</small></a>`;
+    }
     showToast('Video ' + num + ' saved!');
 };
 

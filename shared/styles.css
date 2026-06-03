@@ -30,6 +30,9 @@ body { background:var(--bg-light); color:var(--text-main); line-height:1.5; }
 .nav-links a:hover,.nav-links a.active { color:var(--brand-teal); }
 .btn-accent { background:var(--brand-accent); border-radius:6px; padding:0.5rem 1.2rem; color:white!important; font-weight:600; transition:0.3s; }
 .btn-accent:hover { background:#c7493a; filter:brightness(1.05); }
+.btn-changepw { background:none; border:1px solid #c8ecd4; border-radius:6px; padding:0.4rem 0.9rem; color:var(--brand-teal); font-size:0.82rem; font-weight:700; cursor:pointer; font-family:'Nunito Sans',sans-serif; transition:0.2s; }
+.btn-changepw:hover { background:#f0f8f4; border-color:var(--brand-teal); }
+.btn-changepw i { margin-right:0.3rem; }
 
 .admin-badge {
     display:none; background:#fff3cd; color:#856404;

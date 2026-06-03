@@ -341,6 +341,22 @@ window.signOut = async function() {
     window.location.href = '../login.html';
 };
 
+window.changePassword = async function() {
+    if (!currentUser) return;
+    try {
+        const { error } = await _sb.auth.resetPasswordForEmail(currentUser.email, {
+            redirectTo: window.location.origin + '/reset-password.html'
+        });
+        if (error) {
+            showToast('Error: ' + error.message);
+        } else {
+            showToast('Reset link sent! Check your email.');
+        }
+    } catch (e) {
+        showToast('Could not send reset email. Try again.');
+    }
+};
+
 // ── BUILD PAGE ──
 function buildWeekPage(weekNum, modules) {
     window.WEEK_NUM = weekNum; 

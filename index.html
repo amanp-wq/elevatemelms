@@ -139,6 +139,7 @@
     <div class="nav-links">
         <span class="admin-badge"><i class="fas fa-shield-alt"></i> Admin Mode</span>
         <a href="/" class="active">Dashboard</a>
+        <button onclick="changePassword()" style="background:none;border:1px solid #c8ecd4;border-radius:8px;padding:0.4rem 0.9rem;color:#488a6d;font-size:0.82rem;font-weight:700;cursor:pointer;font-family:Nunito Sans,sans-serif;" onmouseover="this.style.background='#f0f8f4';this.style.borderColor='#488a6d'" onmouseout="this.style.background='none';this.style.color='#488a6d';this.style.borderColor='#c8ecd4'"><i class="fas fa-key"></i> Change Password</button>
         <button onclick="signOut()" style="background:none;border:1px solid #c8ecd4;border-radius:8px;padding:0.4rem 0.9rem;color:#488a6d;font-size:0.82rem;font-weight:700;cursor:pointer;font-family:Nunito Sans,sans-serif;" onmouseover="this.style.background='#fff0ef';this.style.color='#c7493a';this.style.borderColor='#c7493a'" onmouseout="this.style.background='none';this.style.color='#488a6d';this.style.borderColor='#c8ecd4'"><i class="fas fa-sign-out-alt"></i> Sign Out</button>
     </div>
 </nav>
@@ -218,6 +219,26 @@ const _sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 })();
 
 window.signOut = async function() { await _sb.auth.signOut(); window.location.href = 'login.html'; };
+
+window.changePassword = async function() {
+    const { data: { session } } = await _sb.auth.getSession();
+    if (!session) return;
+    try {
+        const { error } = await _sb.auth.resetPasswordForEmail(session.user.email, {
+            redirectTo: window.location.origin + '/reset-password.html'
+        });
+        if (error) {
+            alert('Error: ' + error.message);
+        } else {
+            const t = document.getElementById('toast');
+            document.getElementById('toastMsg').textContent = 'Reset link sent! Check your email.';
+            t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 3000);
+        }
+    } catch (e) {
+        alert('Could not send reset email. Try again.');
+    }
+};
 
 // REMOVED: ?admin=true URL parameter bypass — security vulnerability fixed
 
