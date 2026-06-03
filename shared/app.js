@@ -13,14 +13,17 @@ const _sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 // REMOVED: ?admin=true URL parameter bypass — was a security vulnerability.
 // Admin access is now determined ONLY by email in the admins table.
 
-// Admin emails are now loaded from Supabase 'admins' table (no code changes needed to add/remove admins)
-// Fallback list is only used if the database query fails
-const FALLBACK_ADMIN_EMAILS = ['support@elevateme.pro', 'divina.r@elevateme.pro', 'aman.p@elevateme.pro', 'nitti.v@elevateme.pro'];
-let ADMIN_EMAILS = [...FALLBACK_ADMIN_EMAILS];
+// SECURITY: Admin emails loaded ONLY from Supabase 'admins' table — never hardcoded in client code.
+// If the database query fails, no admin access is granted (fail-secure).
+let ADMIN_EMAILS = [];
 
 let currentUser = null;
 let completed   = {};
 let videos      = JSON.parse(localStorage.getItem('em_videos') || '{}');
+
+// SECURITY: Video URLs are loaded from Supabase 'module_videos' table after auth.
+// Never stored in client-side code — only authenticated users can access them.
+let moduleVideoMap = {}; // { moduleId: { url, url2 } }
 
 // ── LOAD ADMINS FROM DATABASE ──
 async function loadAdmins() {
@@ -30,8 +33,8 @@ async function loadAdmins() {
             ADMIN_EMAILS = data.map(r => r.email.toLowerCase());
         }
     } catch (e) {
-        // If query fails (e.g. table not yet created), use fallback list
-        console.warn('Could not load admins from database, using fallback list.', e);
+        // SECURITY: If query fails, no admin access — fail-secure (no fallback list)
+        console.warn('Could not load admins from database. No admin access granted.', e);
     }
 }
 
@@ -48,6 +51,7 @@ async function initAuth() {
 
     // Load admin list from Supabase before checking
     await loadAdmins();
+    await loadModuleVideos();
 
     if (isAdmin(currentUser.email)) {
         document.body.classList.add('is-admin');
@@ -295,13 +299,30 @@ async function updateProgress() {
     await syncWeekProgress();
 }
 
+// ── LOAD VIDEOS FROM DATABASE ──
+async function loadModuleVideos() {
+    const moduleIds = (window.WEEK_MODULES || []).map(m => m.id);
+    if (!moduleIds.length) return;
+    try {
+        const { data, error } = await _sb.from('module_videos').select('module_id, video_url, video_url_2').in('module_id', moduleIds);
+        if (data) {
+            data.forEach(row => {
+                moduleVideoMap[row.module_id] = { url: row.video_url, url2: row.video_url_2 || null };
+            });
+        }
+    } catch (e) {
+        console.warn('Could not load module videos from database.', e);
+    }
+}
+
 function restoreVideos() {
     (window.WEEK_MODULES || []).forEach(m => {
         // Strict guard: If module explicitly disables video layout, completely skip restoring video streams
-        if (m.hasVideo === false) return; 
+        if (m.hasVideo === false && !m.isDualVideo) return;
         
+        // SECURITY: Admin-saved videos (localStorage) take priority, then database videos
         if (videos[m.id]) applyVideo(m.id, videos[m.id]);
-        else if (m.videoUrl) applyVideo(m.id, m.videoUrl);
+        else if (moduleVideoMap[m.id]?.url) applyVideo(m.id, moduleVideoMap[m.id].url);
     });
 }
 

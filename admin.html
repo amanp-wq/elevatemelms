@@ -266,8 +266,8 @@ let allStudents  = [];
 let allProgress  = {};
 
 // ── LOAD ADMINS FROM DATABASE ──
-const FALLBACK_ADMIN_EMAILS = ['support@elevateme.pro', 'divina.r@elevateme.pro', 'aman.p@elevateme.pro', 'nitti.v@elevateme.pro'];
-let ADMIN_EMAILS = [...FALLBACK_ADMIN_EMAILS];
+// SECURITY: Admin emails loaded ONLY from Supabase — never hardcoded in client code
+let ADMIN_EMAILS = [];
 
 async function loadAdmins() {
     try {
@@ -276,7 +276,8 @@ async function loadAdmins() {
             ADMIN_EMAILS = data.map(r => r.email.toLowerCase());
         }
     } catch (e) {
-        console.warn('Could not load admins from database, using fallback list.', e);
+        // SECURITY: Fail-secure — if DB query fails, no admin access
+        console.warn('Could not load admins from database.', e);
     }
 }
 

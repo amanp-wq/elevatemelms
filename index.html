@@ -197,9 +197,13 @@ const _sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
     const { data: { session } } = await _sb.auth.getSession();
     if (!session) { window.location.href = 'login.html'; return; }
     
-    // FIX 3: Normalize admin email detection
-    const ADMIN_EMAILS = ['support@elevateme.pro', 'divina.r@elevateme.pro', 'aman.p@elevateme.pro', 'nitti.v@elevateme.pro'];
-    if (ADMIN_EMAILS.includes(session.user.email.toLowerCase())) {
+    // SECURITY: Load admin list from Supabase — never hardcoded
+    let adminEmails = [];
+    try {
+        const { data } = await _sb.from('admins').select('email');
+        if (data) adminEmails = data.map(r => r.email.toLowerCase());
+    } catch(e) {}
+    if (adminEmails.includes(session.user.email.toLowerCase())) {
         document.body.classList.add('is-admin');
     }
 

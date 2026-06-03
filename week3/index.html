@@ -71,7 +71,6 @@ const MODULES = [
   {
     id:'w3m1', icon:'fa-rocket', title:'Crafting your Elevator Pitch', subtitle:'60-second pitch',
     hasVideo:true,
-    videoUrl:'https://drive.google.com/file/d/1FAb6aL3Dbjj4IanMmuH21yT-hG4mpPJ5/view?usp=drive_link',
     notes:`
       <p style="margin-bottom:1rem;">This module is designed to help you create an effective and strong Elevator Pitch. An elevator pitch is a brief, persuasive speech that you can use to spark interest in what you do. Whether at networking events, career fairs, or job interviews, a well-crafted elevator pitch can open doors and make a lasting impression.</p>
       <div style="background:#f0f7f4;border-radius:14px;padding:1.2rem 1.4rem;">
@@ -99,8 +98,6 @@ const MODULES = [
   {
     id:'w3m2', icon:'fa-clipboard-list', title:'Pre-Interview Checklist', subtitle:'2 videos · Interview readiness',
     hasVideo:false, isDualVideo:true,
-    videoUrl1:'https://drive.google.com/file/d/18C3pvRSPR_HoMe6V3Iny3F4OXML44lVK/view?usp=sharing',
-    videoUrl2:'https://drive.google.com/file/d/1bCMLseVCEpMZQj_LBsuZsWihUKDIj7ww/view?usp=sharing',
     notes:`
       <p style="margin-bottom:1rem;">This module is designed to help you get ready for interviews by providing checklists and addressing common misconceptions. By following these steps, you can ensure you're thoroughly prepared and confident, making a strong impression on your interviewers.</p>
       <div style="background:#f0f7f4;border-radius:14px;padding:1.2rem 1.4rem;">
@@ -252,8 +249,8 @@ buildWeekPage(3, MODULES);
         const w = document.getElementById(wrapId);
         if (w) w.innerHTML = `<iframe src="https://drive.google.com/file/d/${m[1]}/preview" allowfullscreen allow="autoplay"></iframe>`;
     }
-    embedGDrive('vwrap-' + mod.id + '-1', mod.videoUrl1);
-    embedGDrive('vwrap-' + mod.id + '-2', mod.videoUrl2);
+    if (moduleVideoMap[mod.id]?.url) embedGDrive('vwrap-' + mod.id + '-1', moduleVideoMap[mod.id].url);
+    if (moduleVideoMap[mod.id]?.url2) embedGDrive('vwrap-' + mod.id + '-2', moduleVideoMap[mod.id].url2);
 })();
 
 window.saveDualVideo = function(moduleId, num){

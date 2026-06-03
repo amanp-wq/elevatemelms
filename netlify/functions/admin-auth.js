@@ -3,7 +3,8 @@ const { createClient } = require('@supabase/supabase-js');
 const SUPABASE_URL = 'https://vvazzmoplwfubfhllnwf.supabase.co';
 // This key is safe to include here as it is a server-side function
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ2YXp6bW9wbHdmdWJmaGxsbndmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwOTI1NjMsImV4cCI6MjA5MTY2ODU2M30.pZYjPTsi5Km5OpI02MQMyPEUW9eTLaCJt8cDkFzH05o';
-const FALLBACK_ADMIN_EMAILS = ['support@elevateme.pro', 'divina.r@elevateme.pro', 'aman.p@elevateme.pro', 'nitti.v@elevateme.pro'];
+// SECURITY: Admin emails loaded from Supabase only — never hardcoded
+const FALLBACK_ADMIN_EMAILS = [];
 
 async function getAdminEmails() {
     try {
@@ -13,9 +14,9 @@ async function getAdminEmails() {
             return data.map(r => r.email.toLowerCase());
         }
     } catch (e) {
-        console.warn('Could not load admins from database, using fallback list.', e);
-    }
-    return FALLBACK_ADMIN_EMAILS;
+    // SECURITY: Fail-secure — if DB query fails, return empty (no admin access)
+    console.warn('Could not load admins from database.', e);
+    return [];
 }
 
 exports.handler = async (event) => {
