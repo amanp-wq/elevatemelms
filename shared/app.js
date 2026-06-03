@@ -118,7 +118,7 @@ window.toggleModule = async function(cb) {
 // ── VIDEO HANDLING ──
 function toEmbedUrl(url) {
     let m = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([A-Za-z0-9_-]{11})/);
-    if (m) return `https://www.youtube.com/embed/${m[1]}?rel=0&enablejsapi=1`;
+    if (m) return `https://www.youtube.com/embed/${m[1]}?rel=0&enablejsapi=1&version=3&playerapiid=ytplayer`;
     m = url.match(/vimeo\.com\/(\d+)/);
     if (m) return `https://player.vimeo.com/video/${m[1]}?api=1`;
     m = url.match(/\/file\/d\/([^/]+)/);
@@ -167,6 +167,57 @@ window.clearVideo = function(id) {
     showToast('Video removed');
 };
 
+// ── VIDEO PAUSE HELPER ──
+// Pauses all videos inside a given panel element (YouTube, Vimeo, Google Drive, HTML5)
+function pauseVideosInPanel(panel) {
+    if (!panel) return;
+
+    // Pause HTML5 <video> elements
+    panel.querySelectorAll('video').forEach(v => {
+        v.pause();
+    });
+
+    // Pause YouTube iframes via postMessage API
+    panel.querySelectorAll('iframe').forEach(iframe => {
+        try {
+            const src = iframe.src || '';
+            if (src.includes('youtube.com/embed')) {
+                iframe.contentWindow.postMessage(
+                    JSON.stringify({ event: 'command', func: 'pauseVideo', args: [] }),
+                    '*'
+                );
+            }
+            // Pause Vimeo iframes via postMessage API
+            else if (src.includes('player.vimeo.com')) {
+                iframe.contentWindow.postMessage(
+                    JSON.stringify({ method: 'pause' }),
+                    '*'
+                );
+            }
+            // Google Drive / other iframes — remove and re-add src to stop playback
+            else if (src && (src.includes('drive.google.com') || src.includes('docs.google.com'))) {
+                const currentSrc = iframe.src;
+                iframe.src = '';
+                iframe.src = currentSrc;
+            }
+        } catch (e) {
+            // Cross-origin restrictions may block postMessage; fallback: reset src
+            const currentSrc = iframe.src;
+            if (currentSrc) {
+                iframe.src = '';
+                iframe.src = currentSrc;
+            }
+        }
+    });
+}
+
+// Pause ALL videos across ALL module panels on the page
+function pauseAllVideos() {
+    document.querySelectorAll('.module-panel').forEach(panel => {
+        pauseVideosInPanel(panel);
+    });
+}
+
 // ── NAVIGATION & UI ──
 const activeModule = {};
 
@@ -180,6 +231,10 @@ window.navigateModule = async function(weekNum, dir) {
 
 window.showModule = function(weekNum, idx) {
     const modules = window.WEEK_MODULES || []; if (!modules.length) return;
+
+    // BUG FIX: Pause all videos before switching modules to prevent overlapping audio
+    pauseAllVideos();
+
     activeModule[weekNum] = idx;
     document.querySelectorAll('.sidebar-module-btn').forEach(btn => btn.classList.toggle('active', +btn.dataset.idx === idx));
     document.querySelectorAll('.module-panel').forEach(p => p.classList.remove('active'));
