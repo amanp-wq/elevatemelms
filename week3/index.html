@@ -247,7 +247,7 @@ buildWeekPage(3, MODULES);
         const m = url.match(/\/file\/d\/([^/]+)/);
         if (!m) return;
         const w = document.getElementById(wrapId);
-        if (w) w.innerHTML = `<iframe src="https://drive.google.com/file/d/${m[1]}/preview" allowfullscreen allow="autoplay"></iframe>`;
+        if (w) w.innerHTML = `<a href="https://drive.google.com/file/d/${m[1]}/preview" target="_blank" rel="noopener" class="video-link-btn"><i class="fas fa-play-circle"></i><span>Watch Video</span><small>Opens in new tab</small></a>`;
     }
     if (moduleVideoMap[mod.id]?.url) embedGDrive('vwrap-' + mod.id + '-1', moduleVideoMap[mod.id].url);
     if (moduleVideoMap[mod.id]?.url2) embedGDrive('vwrap-' + mod.id + '-2', moduleVideoMap[mod.id].url2);
@@ -260,7 +260,7 @@ window.saveDualVideo = function(moduleId, num){
     const m = url.match(/\/file\/d\/([^/]+)/);
     const embed = m ? 'https://drive.google.com/file/d/' + m[1] + '/preview' : url;
     const wrap = document.getElementById('vwrap-' + moduleId + '-' + num);
-    if (wrap) wrap.innerHTML = '<iframe src="' + embed + '" allowfullscreen allow="autoplay"></iframe>';
+    if (wrap) wrap.innerHTML = `<a href="${embed}" target="_blank" rel="noopener" class="video-link-btn"><i class="fas fa-play-circle"></i><span>Watch Video</span><small>Opens in new tab</small></a>`;
     showToast('Video ' + num + ' saved!');
 };
 

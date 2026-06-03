@@ -160,13 +160,13 @@ function applyVideo(moduleId, url) {
     if (!wrap) return;
     
     const embed = toEmbedUrl(url);
-    console.log(`applyVideo ${moduleId}: raw="${url}" → embed="${embed}"`);
     if (embed.includes('youtube.com/embed')) {
         wrap.innerHTML = `<iframe id="yt-${moduleId}" src="${embed}&origin=${encodeURIComponent(location.origin)}" allowfullscreen allow="autoplay"></iframe>`;
     } else if (embed.includes('player.vimeo')) {
         wrap.innerHTML = `<iframe id="vm-${moduleId}" src="${embed}" allowfullscreen></iframe>`;
     } else if (embed.includes('drive.google.com')) {
-        wrap.innerHTML = `<iframe src="${embed}" allowfullscreen allow="autoplay"></iframe>`;
+        // Google Drive blocks iframe embedding — show "Watch Video" button instead
+        wrap.innerHTML = `<a href="${embed}" target="_blank" rel="noopener" class="video-link-btn"><i class="fas fa-play-circle"></i><span>Watch Video</span><small>Opens in new tab</small></a>`;
     } else {
         const vid = document.createElement('video');
         vid.src = url; vid.controls = true; vid.muted = true; vid.autoplay = true;
@@ -307,19 +307,16 @@ async function loadModuleVideos() {
     try {
         const { data, error } = await _sb.from('module_videos').select('module_id, video_url, video_url_2').in('module_id', moduleIds);
         if (error) {
-            console.error('module_videos query error:', error.message);
+            console.warn('module_videos query error:', error.message);
             return;
         }
         if (data && data.length > 0) {
             data.forEach(row => {
                 moduleVideoMap[row.module_id] = { url: row.video_url, url2: row.video_url_2 || null };
             });
-            console.log(`Loaded ${data.length} videos from database for modules:`, data.map(r => r.module_id));
-        } else {
-            console.warn('No video data returned from module_videos table. Check RLS policies and data.');
         }
     } catch (e) {
-        console.error('Could not load module videos from database.', e);
+        console.warn('Could not load module videos from database.', e);
     }
 }
 

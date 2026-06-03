@@ -121,6 +121,20 @@ body.is-admin .admin-badge { display:flex; }
 .lesson-video-placeholder { display:flex; flex-direction:column; align-items:center; gap:0.8rem; color:rgba(255,255,255,0.35); text-align:center; padding:2rem; }
 .lesson-video-placeholder i { font-size:3.5rem; color:rgba(255,255,255,0.1); }
 .lesson-video-placeholder span { font-size:0.85rem; }
+
+/* Watch Video button (Google Drive videos open in new tab) */
+.video-link-btn {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 0.6rem; text-decoration: none; color: white; padding: 2rem;
+    width: 100%; height: 100%; position: absolute; inset: 0;
+    background: linear-gradient(135deg, #488a6d 0%, #2d6b52 100%);
+    border-radius: 16px; transition: all 0.3s ease;
+}
+.video-link-btn i { font-size: 3rem; color: rgba(255,255,255,0.9); transition: transform 0.3s; }
+.video-link-btn span { font-size: 1.1rem; font-weight: 800; letter-spacing: 0.04em; }
+.video-link-btn small { font-size: 0.75rem; color: rgba(255,255,255,0.6); font-weight: 500; }
+.video-link-btn:hover { background: linear-gradient(135deg, #c7493a 0%, #a83a2e 100%); }
+.video-link-btn:hover i { transform: scale(1.15); }
 .lesson-video-url-row { display:none; gap:0.5rem; margin-bottom:1.5rem; align-items:center; }
 body.is-admin .lesson-video-url-row { display:flex; }
 .video-url-input { flex:1; font-size:0.8rem; padding:0.4rem 0.7rem; border:1px solid #c8d8d0; border-radius:6px; background:white; color:var(--text-main); outline:none; }
