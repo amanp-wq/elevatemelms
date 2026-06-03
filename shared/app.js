@@ -305,13 +305,20 @@ async function loadModuleVideos() {
     if (!moduleIds.length) return;
     try {
         const { data, error } = await _sb.from('module_videos').select('module_id, video_url, video_url_2').in('module_id', moduleIds);
-        if (data) {
+        if (error) {
+            console.error('module_videos query error:', error.message);
+            return;
+        }
+        if (data && data.length > 0) {
             data.forEach(row => {
                 moduleVideoMap[row.module_id] = { url: row.video_url, url2: row.video_url_2 || null };
             });
+            console.log(`Loaded ${data.length} videos from database for modules:`, data.map(r => r.module_id));
+        } else {
+            console.warn('No video data returned from module_videos table. Check RLS policies and data.');
         }
     } catch (e) {
-        console.warn('Could not load module videos from database.', e);
+        console.error('Could not load module videos from database.', e);
     }
 }
 
