@@ -297,13 +297,15 @@ try {
         headers: { 'x-admin-token': session.access_token }
     });
 } catch (err) {
-    document.body.innerHTML = '<div style="padding:4rem;text-align:center;font-family:sans-serif;"><h2>Connection Error</h2><p>Could not reach the server. Please check your internet connection and try again.</p><a href="./">Return to Dashboard</a></div>';
+    document.body.innerHTML = '<div style="padding:4rem;text-align:center;font-family:sans-serif;"><h2>Connection Error</h2><p>Could not reach the server. Please check your internet connection and try again.</p><p style="color:#999;font-size:0.85rem;">' + err.message + '</p><a href="./">Return to Dashboard</a></div>';
     document.body.style.display = 'block';
     return;
 }
 
 if (!res.ok) {
-    document.body.innerHTML = '<div style="padding:4rem;text-align:center;font-family:sans-serif;"><h2>Access Denied</h2><p>You do not have admin privileges.</p><a href="./">Return to Dashboard</a></div>';
+    let detail = '';
+    try { const d = await res.json(); detail = d.error || ''; } catch(e) {}
+    document.body.innerHTML = '<div style="padding:4rem;text-align:center;font-family:sans-serif;"><h2>Access Denied</h2><p>You do not have admin privileges.</p><p style="color:#999;font-size:0.85rem;">Status: ' + res.status + (detail ? ' — ' + detail : '') + '</p><a href="./">Return to Dashboard</a></div>';
     document.body.style.display = 'block';
     return;
 }
