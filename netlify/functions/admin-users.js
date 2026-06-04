@@ -23,6 +23,7 @@ exports.handler = async (event) => {
     const origin = event.headers.origin || '';
     const isAllowed = origin === 'https://elevatemelms.netlify.app'
         || origin === 'https://elevateme.pro'
+        || origin === 'https://lms.elevateme.pro'
         || origin === 'http://localhost:8888'
         || origin === 'http://localhost:3000';
     const allowedOrigin = isAllowed ? origin : 'https://elevatemelms.netlify.app';
