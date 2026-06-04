@@ -390,7 +390,7 @@ function renderTable(students) {
         tbody.innerHTML = '<tr class="empty-row"><td colspan="6"><i class="fas fa-users" style="font-size:1.5rem;margin-bottom:0.5rem;display:block;"></i>No students found</td></tr>';
         return;
     }
-    tbody.innerHTML = students.map(s => {
+    tbody.innerHTML = students.map((s, idx) => {
         const overall = getOverallPct(s.id);
         const status  = getStatus(s);
         const daysAgo = s.last_login ? Math.floor((Date.now() - new Date(s.last_login)) / 86400000) : 999;
