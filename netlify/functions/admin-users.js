@@ -13,10 +13,10 @@ const ALLOWED_ORIGINS = [
 ];
 
 exports.handler = async (event) => {
-    const origin = event.headers.origin || '';
-    const allowedOrigin = ALLOWED_ORIGINS.includes(origin) ? origin : 'https://elevatemelms.netlify.app';
+    var origin = event.headers.origin || '';
+    var allowedOrigin = ALLOWED_ORIGINS.includes(origin) ? origin : 'https://elevatemelms.netlify.app';
 
-    const headers = {
+    var corsHeaders = {
         'Access-Control-Allow-Origin': allowedOrigin,
         'Access-Control-Allow-Headers': 'Content-Type, Authorization',
         'Access-Control-Allow-Methods': 'POST, OPTIONS',
@@ -24,84 +24,111 @@ exports.handler = async (event) => {
     };
 
     if (event.httpMethod === 'OPTIONS') {
-        return { statusCode: 200, headers, body: '' };
+        return { statusCode: 200, headers: corsHeaders, body: '' };
     }
 
     if (event.httpMethod !== 'POST') {
-        return { statusCode: 405, headers, body: JSON.stringify({ error: 'Method not allowed' }) };
+        return { statusCode: 405, headers: corsHeaders, body: JSON.stringify({ error: 'Method not allowed' }) };
     }
 
     if (!SERVICE_KEY) {
-        return { statusCode: 500, headers, body: JSON.stringify({ error: 'Server configuration error' }) };
+        return { statusCode: 500, headers: corsHeaders, body: JSON.stringify({ error: 'Server configuration error: missing service key' }) };
     }
 
     try {
-        let body;
+        var body;
         try { body = JSON.parse(event.body); }
-        catch { return { statusCode: 400, headers, body: JSON.stringify({ error: 'Invalid JSON' }) }; }
+        catch (e) { return { statusCode: 400, headers: corsHeaders, body: JSON.stringify({ error: 'Invalid JSON' }) }; }
 
-        const { action, email, password, full_name, user_id, calling_user_token } = body;
+        var action = body.action;
+        var email = body.email;
+        var password = body.password;
+        var full_name = body.full_name;
+        var user_id = body.user_id;
+        var calling_user_token = body.calling_user_token;
 
-        // Verify the calling user is an admin
-        const anonClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        const { data: { user }, error: authError } = await anonClient.auth.getUser(calling_user_token);
+        // Verify the calling user is an admin using anon key
+        var anonClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        var userResult = await anonClient.auth.getUser(calling_user_token);
+        var user = userResult.data && userResult.data.user ? userResult.data.user : null;
+        var authError = userResult.error;
 
         if (authError || !user) {
-            return { statusCode: 403, headers, body: JSON.stringify({ error: 'Access denied' }) };
+            return { statusCode: 403, headers: corsHeaders, body: JSON.stringify({ error: 'Access denied: invalid token' }) };
         }
 
-        // Check admin list from database
-        const { data: adminRows, error: adminError } = await anonClient.from('admins').select('email');
-        const adminEmails = (adminRows || []).map(r => r.email.toLowerCase());
+        // Use SERVICE ROLE KEY to query admins table (bypasses RLS)
+        var adminCheckClient = createClient(SUPABASE_URL, SERVICE_KEY, {
+            auth: { autoRefreshToken: false, persistSession: false }
+        });
 
-        if (!adminEmails.includes(user.email.toLowerCase())) {
-            return { statusCode: 403, headers, body: JSON.stringify({ error: 'Access denied' }) };
+        var adminResult = await adminCheckClient.from('admins').select('email');
+        var adminRows = adminResult.data || [];
+        var adminDbError = adminResult.error;
+
+        if (adminDbError) {
+            return { statusCode: 500, headers: corsHeaders, body: JSON.stringify({ error: 'Database error: ' + adminDbError.message }) };
+        }
+
+        var adminEmails = adminRows.map(function(r) { return r.email.toLowerCase(); });
+        var userEmail = user.email.toLowerCase();
+
+        if (adminEmails.indexOf(userEmail) === -1) {
+            return { statusCode: 403, headers: corsHeaders, body: JSON.stringify({ error: 'Access denied: not an admin' }) };
         }
 
         // Use service role client for admin operations
-        const admin = createClient(SUPABASE_URL, SERVICE_KEY, {
+        var admin = createClient(SUPABASE_URL, SERVICE_KEY, {
             auth: { autoRefreshToken: false, persistSession: false }
         });
 
         if (action === 'create') {
-            const { data, error } = await admin.auth.admin.createUser({
-                email,
-                password,
+            var createResult = await admin.auth.admin.createUser({
+                email: email,
+                password: password,
                 email_confirm: true,
                 user_metadata: { full_name: full_name || '' }
             });
-            if (error) return { statusCode: 400, headers, body: JSON.stringify({ error: error.message }) };
+            if (createResult.error) {
+                return { statusCode: 400, headers: corsHeaders, body: JSON.stringify({ error: createResult.error.message }) };
+            }
 
             await admin.from('profiles').upsert({
-                id: data.user.id,
-                email,
+                id: createResult.data.user.id,
+                email: email,
                 full_name: full_name || ''
             }, { onConflict: 'id' });
 
-            return { statusCode: 200, headers, body: JSON.stringify({ success: true, user: data.user }) };
+            return { statusCode: 200, headers: corsHeaders, body: JSON.stringify({ success: true, user: createResult.data.user }) };
         }
 
         if (action === 'delete') {
-            const { error } = await admin.auth.admin.deleteUser(user_id);
-            if (error) return { statusCode: 400, headers, body: JSON.stringify({ error: error.message }) };
-            return { statusCode: 200, headers, body: JSON.stringify({ success: true }) };
+            var deleteResult = await admin.auth.admin.deleteUser(user_id);
+            if (deleteResult.error) {
+                return { statusCode: 400, headers: corsHeaders, body: JSON.stringify({ error: deleteResult.error.message }) };
+            }
+            return { statusCode: 200, headers: corsHeaders, body: JSON.stringify({ success: true }) };
         }
 
         if (action === 'reset_password') {
-            const { error } = await admin.auth.admin.updateUserById(user_id, { password });
-            if (error) return { statusCode: 400, headers, body: JSON.stringify({ error: error.message }) };
-            return { statusCode: 200, headers, body: JSON.stringify({ success: true }) };
+            var resetResult = await admin.auth.admin.updateUserById(user_id, { password: password });
+            if (resetResult.error) {
+                return { statusCode: 400, headers: corsHeaders, body: JSON.stringify({ error: resetResult.error.message }) };
+            }
+            return { statusCode: 200, headers: corsHeaders, body: JSON.stringify({ success: true }) };
         }
 
         if (action === 'list') {
-            const { data, error } = await admin.auth.admin.listUsers({ perPage: 1000 });
-            if (error) return { statusCode: 400, headers, body: JSON.stringify({ error: error.message }) };
-            return { statusCode: 200, headers, body: JSON.stringify({ users: data.users }) };
+            var listResult = await admin.auth.admin.listUsers({ perPage: 1000 });
+            if (listResult.error) {
+                return { statusCode: 400, headers: corsHeaders, body: JSON.stringify({ error: listResult.error.message }) };
+            }
+            return { statusCode: 200, headers: corsHeaders, body: JSON.stringify({ users: listResult.data.users }) };
         }
 
-        return { statusCode: 400, headers, body: JSON.stringify({ error: 'Unknown action' }) };
+        return { statusCode: 400, headers: corsHeaders, body: JSON.stringify({ error: 'Unknown action' }) };
 
     } catch (err) {
-        return { statusCode: 500, headers, body: JSON.stringify({ error: 'Internal server error: ' + err.message }) };
+        return { statusCode: 500, headers: corsHeaders, body: JSON.stringify({ error: 'Internal server error: ' + err.message }) };
     }
 };
