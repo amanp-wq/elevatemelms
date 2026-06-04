@@ -13,9 +13,10 @@ async function getAdminEmails() {
             return data.map(r => r.email.toLowerCase());
         }
     } catch (e) {
-    // SECURITY: Fail-secure — if DB query fails, return empty (no admin access)
-    console.warn('Could not load admins from database.', e);
-    return [];
+        // SECURITY: Fail-secure — if DB query fails, return empty (no admin access)
+        console.warn('Could not load admins from database.', e);
+        return [];
+    }
 }
 
 exports.handler = async (event) => {
