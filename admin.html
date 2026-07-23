@@ -108,6 +108,30 @@
         .modal-success{background:#eef7f2;border:1px solid #c8e6d8;border-radius:8px;padding:0.6rem 0.8rem;font-size:0.82rem;color:#488a6d;margin-top:0.8rem;display:none;}
         .modal-success.show{display:block;}
 
+        /* Bulk import */
+        .btn-add.btn-outline{background:white;color:#488a6d;border:1.5px solid #488a6d;}
+        .btn-add.btn-outline:hover{background:#f0f7f4;color:#488a6d;}
+        .modal.modal-lg{max-width:600px;}
+        .bulk-drop{border:2px dashed #c8ecd4;border-radius:12px;padding:1.4rem;text-align:center;color:#4a6b55;cursor:pointer;transition:0.2s;background:#fafffe;}
+        .bulk-drop:hover,.bulk-drop.drag{border-color:#488a6d;background:#f0f7f4;}
+        .bulk-drop i{font-size:1.6rem;color:#488a6d;margin-bottom:0.5rem;display:block;}
+        .bulk-hint{font-size:0.78rem;color:#4a6b55;margin-top:0.8rem;line-height:1.5;}
+        .bulk-hint code{background:#f0f7f4;padding:0.1rem 0.35rem;border-radius:4px;font-size:0.75rem;color:#488a6d;}
+        .link-sample{color:#488a6d;font-weight:700;cursor:pointer;text-decoration:underline;background:none;border:none;font-family:'Nunito Sans',sans-serif;font-size:0.82rem;padding:0;}
+        .bulk-file-name{font-size:0.82rem;color:#488a6d;font-weight:700;margin-top:0.6rem;display:none;}
+        .bulk-file-name.show{display:block;}
+        .bulk-progress{font-size:0.85rem;color:#4a6b55;margin-top:0.9rem;font-weight:700;display:none;}
+        .bulk-progress.show{display:block;}
+        .bulk-results{margin-top:0.8rem;max-height:230px;overflow-y:auto;border:1px solid #c8ecd4;border-radius:10px;display:none;}
+        .bulk-results.show{display:block;}
+        .bulk-result-row{display:flex;align-items:center;gap:0.6rem;padding:0.5rem 0.8rem;border-bottom:1px solid #f0f7f4;font-size:0.8rem;}
+        .bulk-result-row:last-child{border-bottom:none;}
+        .bulk-result-row .ic-ok{color:#488a6d;}
+        .bulk-result-row .ic-fail{color:#c65343;}
+        .bulk-result-row .r-email{font-weight:700;color:#1a1a1a;}
+        .bulk-result-row .r-msg{color:#4a6b55;margin-left:auto;text-align:right;padding-left:0.6rem;}
+        .bulk-result-row .r-msg code{background:#f0f7f4;padding:0.1rem 0.35rem;border-radius:4px;color:#1a1a1a;}
+
         /* Detail drawer */
         .drawer{position:fixed;right:0;top:0;height:100%;width:480px;max-width:100%;background:white;box-shadow:-8px 0 40px rgba(0,0,0,0.1);transform:translateX(100%);transition:transform 0.3s ease;z-index:998;overflow-y:auto;}
         .drawer.open{transform:translateX(0);}
@@ -152,6 +176,7 @@
         <p id="lastUpdated">Verifying admin access…</p>
     </div>
     <div class="header-actions">
+        <button class="btn-add btn-outline" onclick="openBulkModal()"><i class="fas fa-file-import"></i> Bulk Import</button>
         <button class="btn-add" onclick="openAddModal()"><i class="fas fa-user-plus"></i> Add Student</button>
     </div>
 </div>
@@ -227,6 +252,33 @@
         <div class="modal-actions">
             <button class="btn-cancel" onclick="closeAddModal()">Cancel</button>
             <button class="btn-save" id="addBtn" onclick="addStudent()">Create Account</button>
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="bulkModal">
+    <div class="modal modal-lg">
+        <h2><i class="fas fa-file-import" style="color:#488a6d;margin-right:0.5rem;"></i>Bulk Import Students</h2>
+        <p style="font-size:0.85rem;color:#4a6b55;margin-bottom:1rem;">Upload a CSV to create many student accounts at once.
+            <button class="link-sample" onclick="downloadSampleCsv()"><i class="fas fa-download"></i> Download sample CSV</button>
+        </p>
+        <div class="bulk-drop" id="bulkDrop">
+            <i class="fas fa-cloud-arrow-up"></i>
+            <div><strong>Click to choose a CSV file</strong></div>
+            <div style="font-size:0.78rem;margin-top:0.3rem;">or drag &amp; drop it here</div>
+        </div>
+        <input type="file" id="bulkFile" accept=".csv,text/csv" style="display:none;"/>
+        <div class="bulk-file-name" id="bulkFileName"></div>
+        <div class="bulk-hint">
+            Columns: <code>full_name</code>, <code>email</code>, <code>password</code>. Email is required.
+            If a password is blank or under 8 characters, a secure one is generated and shown in the results below.
+        </div>
+        <div class="bulk-progress" id="bulkProgress"></div>
+        <div class="bulk-results" id="bulkResults"></div>
+        <div class="modal-error" id="bulkError"></div>
+        <div class="modal-actions">
+            <button class="btn-cancel" onclick="closeBulkModal()">Close</button>
+            <button class="btn-save" id="bulkBtn" onclick="runBulkImport()" disabled>Import Students</button>
         </div>
     </div>
 </div>
@@ -555,6 +607,162 @@ function closeAddModal() {
     document.getElementById('newPassword').value = '';
 }
 
+// ── BULK IMPORT ──
+const SAMPLE_CSV = 'full_name,email,password\n'
+    + 'Jane Smith,jane.smith@example.com,Welcome123!\n'
+    + 'Carlos Rivera,carlos.rivera@example.com,Welcome123!\n'
+    + 'Aisha Khan,aisha.khan@example.com,\n';
+
+let bulkRows = [];
+
+function openBulkModal() { document.getElementById('bulkModal').classList.add('open'); }
+function closeBulkModal() {
+    document.getElementById('bulkModal').classList.remove('open');
+    bulkRows = [];
+    document.getElementById('bulkFile').value = '';
+    document.getElementById('bulkBtn').disabled = true;
+    document.getElementById('bulkFileName').classList.remove('show');
+    document.getElementById('bulkFileName').textContent = '';
+    document.getElementById('bulkError').classList.remove('show');
+    const prog = document.getElementById('bulkProgress');
+    prog.classList.remove('show'); prog.textContent = '';
+    const res = document.getElementById('bulkResults');
+    res.classList.remove('show'); res.innerHTML = '';
+}
+
+function downloadSampleCsv() {
+    const blob = new Blob([SAMPLE_CSV], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'students-sample.csv';
+    document.body.appendChild(a); a.click();
+    document.body.removeChild(a); URL.revokeObjectURL(url);
+}
+
+// Minimal CSV parser — handles quoted fields, commas and newlines inside quotes, and BOM.
+function parseCsv(text) {
+    text = text.replace(/^﻿/, '');
+    const rows = []; let row = []; let field = ''; let inQuotes = false;
+    for (let i = 0; i < text.length; i++) {
+        const c = text[i];
+        if (inQuotes) {
+            if (c === '"') {
+                if (text[i + 1] === '"') { field += '"'; i++; }
+                else inQuotes = false;
+            } else field += c;
+        } else {
+            if (c === '"') inQuotes = true;
+            else if (c === ',') { row.push(field); field = ''; }
+            else if (c === '\n') { row.push(field); rows.push(row); row = []; field = ''; }
+            else if (c === '\r') { /* ignore */ }
+            else field += c;
+        }
+    }
+    if (field.length > 0 || row.length > 0) { row.push(field); rows.push(row); }
+    return rows.filter(r => r.some(v => v.trim() !== ''));
+}
+
+function genPassword() {
+    const chars = 'abcdefghjkmnpqrstuvwxyzABCDEFGHJKMNPQRSTUVWXYZ23456789';
+    const arr = new Uint32Array(12);
+    (window.crypto || window.msCrypto).getRandomValues(arr);
+    let out = '';
+    for (let i = 0; i < arr.length; i++) out += chars[arr[i] % chars.length];
+    return out + '!7'; // guarantee length >=8 with a symbol + digit
+}
+
+function onBulkFile(file) {
+    const errEl = document.getElementById('bulkError');
+    errEl.classList.remove('show');
+    const nameEl = document.getElementById('bulkFileName');
+    const reader = new FileReader();
+    reader.onload = () => {
+        try {
+            const rows = parseCsv(String(reader.result));
+            if (rows.length < 2) throw new Error('CSV has no data rows.');
+            const header = rows[0].map(h => h.trim().toLowerCase());
+            const iEmail = header.findIndex(h => h === 'email');
+            const iName  = header.findIndex(h => h === 'full_name' || h === 'name');
+            const iPass  = header.findIndex(h => h === 'password');
+            if (iEmail === -1) throw new Error('CSV must have an "email" column.');
+
+            bulkRows = [];
+            for (let r = 1; r < rows.length; r++) {
+                const cols = rows[r];
+                const email = (cols[iEmail] || '').trim();
+                if (!email) continue;
+                bulkRows.push({
+                    email: email,
+                    full_name: iName  !== -1 ? (cols[iName]  || '').trim() : '',
+                    password:  iPass  !== -1 ? (cols[iPass]  || '').trim() : ''
+                });
+            }
+            if (!bulkRows.length) throw new Error('No rows with an email were found.');
+
+            nameEl.textContent = '✓ ' + file.name + ' — ' + bulkRows.length + ' student(s) ready to import';
+            nameEl.classList.add('show');
+            document.getElementById('bulkBtn').disabled = false;
+        } catch (e) {
+            errEl.textContent = e.message || 'Could not read that CSV file.';
+            errEl.classList.add('show');
+            document.getElementById('bulkBtn').disabled = true;
+            nameEl.classList.remove('show');
+        }
+    };
+    reader.onerror = () => { errEl.textContent = 'Could not read the file.'; errEl.classList.add('show'); };
+    reader.readAsText(file);
+}
+
+async function runBulkImport() {
+    if (!bulkRows.length) return;
+    const btn = document.getElementById('bulkBtn');
+    const prog = document.getElementById('bulkProgress');
+    const res = document.getElementById('bulkResults');
+    const errEl = document.getElementById('bulkError');
+    errEl.classList.remove('show');
+    btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Importing…';
+    res.innerHTML = ''; res.classList.add('show');
+    prog.classList.add('show');
+
+    let created = 0, failed = 0;
+    const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    for (let i = 0; i < bulkRows.length; i++) {
+        const row = bulkRows[i];
+        prog.textContent = 'Processing ' + (i + 1) + ' of ' + bulkRows.length + '…';
+
+        let ok = false, msg = '';
+        if (!emailRe.test(row.email)) {
+            msg = 'Invalid email';
+        } else {
+            let pass = row.password;
+            let generated = false;
+            if (!pass || pass.length < 8) { pass = genPassword(); generated = true; }
+            const result = await adminAPI({ action: 'create', email: row.email, password: pass, full_name: row.full_name });
+            if (result && result.error) {
+                msg = result.error;
+            } else {
+                ok = true;
+                msg = generated ? 'Created · password <code>' + pass + '</code>' : 'Created';
+            }
+        }
+
+        if (ok) created++; else failed++;
+        const div = document.createElement('div');
+        div.className = 'bulk-result-row';
+        div.innerHTML = '<i class="fas ' + (ok ? 'fa-check-circle ic-ok' : 'fa-times-circle ic-fail') + '"></i>'
+            + '<span class="r-email"></span><span class="r-msg">' + msg + '</span>';
+        div.querySelector('.r-email').textContent = row.email; // safe text (avoids XSS)
+        res.appendChild(div);
+        res.scrollTop = res.scrollHeight;
+    }
+
+    prog.innerHTML = '<strong>Done.</strong> ' + created + ' created, ' + failed + ' failed.'
+        + (created ? ' Copy any generated passwords above before closing.' : '');
+    btn.disabled = false; btn.innerHTML = 'Import Students';
+    if (created) loadData();
+}
+
 async function signOut() {
     await _sb.auth.signOut();
     window.location.href = './login.html';
@@ -562,6 +770,21 @@ async function signOut() {
 
 // Close modal/drawer on outside click
 document.getElementById('addModal').addEventListener('click', e => { if (e.target === e.currentTarget) closeAddModal(); });
+document.getElementById('bulkModal').addEventListener('click', e => { if (e.target === e.currentTarget) closeBulkModal(); });
+
+// ── Bulk import: file input + drag & drop wiring ──
+(function () {
+    const drop = document.getElementById('bulkDrop');
+    const input = document.getElementById('bulkFile');
+    drop.addEventListener('click', () => input.click());
+    input.addEventListener('change', e => { if (e.target.files && e.target.files[0]) onBulkFile(e.target.files[0]); });
+    ['dragenter', 'dragover'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add('drag'); }));
+    ['dragleave', 'drop'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove('drag'); }));
+    drop.addEventListener('drop', e => {
+        const f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+        if (f) onBulkFile(f);
+    });
+})();
 
 // SECURITY: Event delegation for action buttons — avoids inline onclick with user data (XSS prevention)
 document.getElementById('studentTable').addEventListener('click', e => {
