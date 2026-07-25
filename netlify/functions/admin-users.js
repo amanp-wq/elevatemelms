@@ -1,4 +1,5 @@
 const { createClient } = require('@supabase/supabase-js');
+const { sendWelcomeEmail } = require('./mailer');
 
 const SUPABASE_URL = 'https://vvazzmoplwfubfhllnwf.supabase.co';
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
@@ -99,7 +100,15 @@ exports.handler = async (event) => {
                 full_name: full_name || ''
             }, { onConflict: 'id' });
 
-            return { statusCode: 200, headers: corsHeaders, body: JSON.stringify({ success: true, user: createResult.data.user }) };
+            var emailResult = { sent: false };
+            try {
+                emailResult = await sendWelcomeEmail({ email: email, password: password, full_name: full_name });
+            } catch (mailErr) {
+                console.error('Welcome email failed:', mailErr.message);
+                emailResult = { sent: false, reason: mailErr.message };
+            }
+
+            return { statusCode: 200, headers: corsHeaders, body: JSON.stringify({ success: true, user: createResult.data.user, email: emailResult }) };
         }
 
         if (action === 'delete') {
