@@ -45,7 +45,7 @@ async function sendWelcomeEmail({ email, password, full_name }) {
     await transport.sendMail({
         from: process.env.SMTP_FROM || process.env.SMTP_USER,
         to: email,
-        subject: 'Welcome to ElevateMe — Your Account Details',
+        subject: 'Welcome to ElevateMe — Access Your Learning Portal',
         html: html
     });
 
