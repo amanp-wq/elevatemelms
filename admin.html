@@ -744,6 +744,7 @@ async function runBulkImport() {
             } else {
                 ok = true;
                 msg = generated ? 'Created · password <code>' + pass + '</code>' : 'Created';
+                msg += (result && result.email && result.email.sent) ? ' · Email sent' : ' · Email not sent';
             }
         }
 
