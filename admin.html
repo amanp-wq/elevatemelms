@@ -85,6 +85,10 @@
 
         /* Action buttons */
         .action-btn{background:none;border:1px solid #c8ecd4;border-radius:7px;padding:0.3rem 0.6rem;font-size:0.78rem;cursor:pointer;color:#488a6d;font-weight:600;transition:0.2s;font-family:'Nunito Sans',sans-serif;}
+        .bulk-actions-bar{max-width:1400px;margin:0 auto;padding:0 2rem 0.8rem;display:none;align-items:center;gap:0.8rem;}
+        .bulk-actions-bar.show{display:flex;}
+        .bulk-actions-bar .bulk-count{font-size:0.85rem;font-weight:700;color:#1a1a1a;}
+        .row-checkbox,.select-all-checkbox{width:16px;height:16px;cursor:pointer;accent-color:#488a6d;}
         .action-btn:hover{background:#f0f7f4;border-color:#488a6d;}
         .action-btn.danger{color:#c65343;border-color:#f5c6be;}
         .action-btn.danger:hover{background:#fff0f0;border-color:#c65343;}
@@ -214,10 +218,18 @@
 </select>
 </div>
 
+<div class="bulk-actions-bar" id="bulkActionsBar">
+    <span class="bulk-count" id="bulkCount">0 selected</span>
+    <button class="action-btn danger" onclick="bulkResetPassword()"><i class="fas fa-key"></i> Reset Password</button>
+    <button class="action-btn danger" onclick="bulkDelete()"><i class="fas fa-trash"></i> Delete Selected</button>
+    <button class="action-btn" onclick="clearSelection()">Clear</button>
+</div>
+
 <div class="table-wrap">
     <table class="student-table">
         <thead>
             <tr>
+                <th><input type="checkbox" class="select-all-checkbox" id="selectAllCheckbox"></th>
                 <th>Student</th>
                 <th>Overall Progress</th>
                 <th>Week-by-Week</th>
@@ -227,7 +239,7 @@
             </tr>
         </thead>
         <tbody id="studentTable">
-            <tr class="loading-row"><td colspan="6"><i class="fas fa-circle-notch fa-spin"></i> Loading students…</td></tr>
+            <tr class="loading-row"><td colspan="7"><i class="fas fa-circle-notch fa-spin"></i> Loading students…</td></tr>
         </tbody>
     </table>
 </div>
@@ -439,7 +451,8 @@ function renderStats() {
 function renderTable(students) {
     const tbody = document.getElementById('studentTable');
     if (!students.length) {
-        tbody.innerHTML = '<tr class="empty-row"><td colspan="6"><i class="fas fa-users" style="font-size:1.5rem;margin-bottom:0.5rem;display:block;"></i>No students found</td></tr>';
+        tbody.innerHTML = '<tr class="empty-row"><td colspan="7"><i class="fas fa-users" style="font-size:1.5rem;margin-bottom:0.5rem;display:block;"></i>No students found</td></tr>';
+        updateBulkBar();
         return;
     }
     tbody.innerHTML = students.map((s, idx) => {
@@ -457,6 +470,7 @@ function renderTable(students) {
         }).join('');
 
         return `<tr>
+            <td><input type="checkbox" class="row-checkbox" data-id="${s.id}" ${selectedIds.has(s.id) ? 'checked' : ''}></td>
             <td>
                 <div class="student-info">
                     <div class="student-avatar">${initials(s)}</div>
@@ -487,6 +501,82 @@ function renderTable(students) {
             </td>
         </tr>`;
     }).join('');
+    updateBulkBar();
+}
+
+// ── BULK SELECTION ──
+let selectedIds = new Set();
+
+function updateBulkBar() {
+    const bar = document.getElementById('bulkActionsBar');
+    const count = document.getElementById('bulkCount');
+    count.textContent = selectedIds.size + ' selected';
+    bar.classList.toggle('show', selectedIds.size > 0);
+
+    const rowBoxes = document.querySelectorAll('#studentTable .row-checkbox');
+    const selectAll = document.getElementById('selectAllCheckbox');
+    if (rowBoxes.length) {
+        const allChecked = Array.from(rowBoxes).every(cb => selectedIds.has(cb.dataset.id));
+        selectAll.checked = allChecked;
+        selectAll.indeterminate = !allChecked && Array.from(rowBoxes).some(cb => selectedIds.has(cb.dataset.id));
+    } else {
+        selectAll.checked = false;
+        selectAll.indeterminate = false;
+    }
+}
+
+function clearSelection() {
+    selectedIds.clear();
+    document.querySelectorAll('#studentTable .row-checkbox').forEach(cb => cb.checked = false);
+    updateBulkBar();
+}
+
+document.getElementById('studentTable').addEventListener('change', e => {
+    const cb = e.target.closest('.row-checkbox');
+    if (!cb) return;
+    if (cb.checked) selectedIds.add(cb.dataset.id); else selectedIds.delete(cb.dataset.id);
+    updateBulkBar();
+});
+
+document.getElementById('selectAllCheckbox').addEventListener('change', e => {
+    const rowBoxes = document.querySelectorAll('#studentTable .row-checkbox');
+    rowBoxes.forEach(cb => {
+        cb.checked = e.target.checked;
+        if (e.target.checked) selectedIds.add(cb.dataset.id); else selectedIds.delete(cb.dataset.id);
+    });
+    updateBulkBar();
+});
+
+async function bulkDelete() {
+    const ids = Array.from(selectedIds);
+    if (!ids.length) return;
+    if (!confirm(`Delete ${ids.length} selected student account(s)?\n\nThis cannot be undone.`)) return;
+
+    let okCount = 0, failCount = 0;
+    for (const id of ids) {
+        const result = await adminAPI({ action: 'delete', user_id: id });
+        if (result && result.error) failCount++; else okCount++;
+    }
+    alert(`Deleted ${okCount} student(s).` + (failCount ? ` ${failCount} failed.` : ''));
+    selectedIds.clear();
+    loadData();
+}
+
+async function bulkResetPassword() {
+    const ids = Array.from(selectedIds);
+    if (!ids.length) return;
+    const newPass = prompt(`Set a new password for ${ids.length} selected student(s):\n(min. 8 characters)`);
+    if (!newPass) return;
+    if (newPass.length < 8) { alert('Password must be at least 8 characters.'); return; }
+
+    let okCount = 0, failCount = 0;
+    for (const id of ids) {
+        const result = await adminAPI({ action: 'reset_password', user_id: id, password: newPass });
+        if (result && result.error) failCount++; else okCount++;
+    }
+    alert(`Password updated for ${okCount} student(s).` + (failCount ? ` ${failCount} failed.` : ''));
+    selectedIds.clear();
+    loadData();
 }
 
 function filterStudents() {
