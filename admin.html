@@ -307,24 +307,20 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="shared/curriculum.js"></script>
 <script>
 const SUPABASE_URL = 'https://vvazzmoplwfubfhllnwf.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ2YXp6bW9wbHdmdWJmaGxsbndmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwOTI1NjMsImV4cCI6MjA5MTY2ODU2M30.pZYjPTsi5Km5OpI02MQMyPEUW9eTLaCJt8cDkFzH05o';
 const _sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const WEEKS = 10;
-const WEEK_MODULES = {
-    1:['w1m1','w1m2','w1m3','w1m4','w1m5'],
-    2:['w2m1','w2m2','w2m3','w2m4','w2m5','w2m6','w2m7','w2m8','w2m9','w2m10'],
-    3:['w3m1','w3m2','w3m3','w3m4'],
-    4:['w4m1','w4m2','w4m3','w4m4'],
-    5:['w5m1','w5m2','w5m3'],
-    6:['w6m1','w6m2','w6m3','w6m4','w6m5'],
-    7:['w7m1','w7m2','w7m3','w7m4','w7m5','w7m6'],
-    8:['w8m1','w8m2','w8m3','w8m4'],
-    9:['w9m1','w9m2','w9m3'],
-    10:['w10m1','w10m2','w10m3']
-};
+// Derived from shared/curriculum.js (the same file week1-10/index.html load
+// their content from) instead of a hand-typed copy — the two can no longer
+// silently drift apart.
+const WEEK_MODULES = {};
+for (let w = 1; w <= WEEKS; w++) {
+    WEEK_MODULES[w] = (window.CURRICULUM[w] || []).map(m => m.id);
+}
 
 let allStudents  = [];
 let allProgress  = {};
@@ -351,6 +347,7 @@ function isAdmin(email) {
 
 // ── AUTH CHECK (SECURED) ──
 (async () => {
+  try {
     const { data: { session } } = await _sb.auth.getSession();
     if (!session) { window.location.href = './login.html'; return; }
 
@@ -378,6 +375,13 @@ if (!res.ok) {
     document.body.style.display = 'block';
     await loadAdmins();
     await loadData();
+  } catch (err) {
+    // SECURITY/UX: without this, any unexpected throw (e.g. getSession()
+    // failing on a corrupted localStorage session) leaves body permanently
+    // hidden with no way for the admin to recover except clearing site data.
+    document.body.innerHTML = '<div style="padding:4rem;text-align:center;font-family:sans-serif;"><h2>Something Went Wrong</h2><p>We could not verify your session. Please try refreshing the page.</p><p style="color:#999;font-size:0.85rem;">' + (err && err.message ? err.message : '') + '</p><a href="./login.html">Return to Login</a></div>';
+    document.body.style.display = 'block';
+  }
 })();
 
 async function loadData() {
@@ -630,7 +634,8 @@ async function addStudent() {
 
     if (result.error) { errEl.textContent = result.error; errEl.classList.add('show'); }
     else {
-        succEl.textContent = `✓ Account created for ${email}!`;
+        const emailNote = (result.email && result.email.sent) ? ' Welcome email sent.' : ' Welcome email could not be sent.';
+        succEl.textContent = `✓ Account created for ${email}!${emailNote}`;
         succEl.classList.add('show');
         setTimeout(() => { closeAddModal(); loadData(); }, 2000);
     }

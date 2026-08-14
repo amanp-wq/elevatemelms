@@ -57,11 +57,14 @@ async function initAuth() {
         document.body.classList.add('is-admin');
     }
 
-    await _sb.from('profiles').upsert({
-        id: currentUser.id, 
+    const { error: lastLoginError } = await _sb.from('profiles').upsert({
+        id: currentUser.id,
         email: currentUser.email,
         last_login: new Date().toISOString()
     }, { onConflict: 'id' });
+    // Non-blocking: only feeds the admin dashboard's "Last Login" display,
+    // so a failure here shouldn't stop the student from using the page.
+    if (lastLoginError) console.warn('Failed to update last_login:', lastLoginError.message);
 
     await loadProgress();
     return true;
@@ -69,39 +72,54 @@ async function initAuth() {
 
 async function loadProgress() {
     if (!currentUser) return;
-    const { data } = await _sb.from('progress').select('module_id').eq('user_id', currentUser.id);
+    const { data, error } = await _sb.from('progress').select('module_id').eq('user_id', currentUser.id);
+    if (error) console.warn('Failed to load progress:', error.message);
     completed = {};
     if (data) data.forEach(r => { completed[r.module_id] = true; });
 }
 
+// Returns true only if the write (and the week-% sync that follows it)
+// actually succeeded — callers use this to roll back optimistic UI on failure
+// instead of silently showing "saved" when it wasn't.
 async function saveModuleProgress(moduleId, isComplete) {
-    if (!currentUser) return;
-    
+    if (!currentUser) return false;
+
+    let error;
     if (isComplete) {
-        await _sb.from('progress').upsert({
-            user_id: currentUser.id, 
+        ({ error } = await _sb.from('progress').upsert({
+            user_id: currentUser.id,
             module_id: moduleId,
             completed_at: new Date().toISOString()
-        }, { onConflict: 'user_id,module_id' });
+        }, { onConflict: 'user_id,module_id' }));
     } else {
-        await _sb.from('progress').delete().eq('user_id', currentUser.id).eq('module_id', moduleId);
+        ({ error } = await _sb.from('progress').delete().eq('user_id', currentUser.id).eq('module_id', moduleId));
     }
-    
-    await syncWeekProgress();
+
+    if (error) {
+        console.error('Failed to save module progress:', error.message);
+        return false;
+    }
+
+    return await syncWeekProgress();
 }
 
 async function syncWeekProgress() {
-    if (!currentUser || !window.WEEK_MODULES || !window.WEEK_NUM) return;
-    
+    if (!currentUser || !window.WEEK_MODULES || !window.WEEK_NUM) return true;
+
     const total = window.WEEK_MODULES.length;
     const done  = window.WEEK_MODULES.filter(m => completed[m.id]).length;
     const pct   = total ? Math.round((done / total) * 100) : 0;
-    
+
     const update = { id: currentUser.id };
     update[`week${window.WEEK_NUM}_progress`] = pct;
-    
-    await _sb.from('profiles').update(update).eq('id', currentUser.id);
+
+    const { error } = await _sb.from('profiles').update(update).eq('id', currentUser.id);
+    if (error) {
+        console.error('Failed to sync week progress:', error.message);
+        return false;
+    }
     localStorage.setItem(`em_week${window.WEEK_NUM}_progress`, pct);
+    return true;
 }
 
 // ── TOAST ──
@@ -118,30 +136,49 @@ function showToast(msg) {
 async function markModuleComplete(id) {
     if (completed[id]) return;
     completed[id] = true;
-    
+
     document.querySelectorAll(`input[type="checkbox"][data-module="${id}"]`).forEach(cb => { cb.checked = true; });
     const bar = document.getElementById(`ctbar-${id}`);
     if (bar) bar.classList.add('done');
     const sideBtn = document.querySelector(`.sidebar-module-btn[data-module="${id}"]`);
     if (sideBtn) sideBtn.classList.add('done');
-    
-    await saveModuleProgress(id, true);
+
+    const ok = await saveModuleProgress(id, true);
+    if (!ok) {
+        // Roll back the optimistic UI — don't show "done" for something that didn't save.
+        completed[id] = false;
+        document.querySelectorAll(`input[type="checkbox"][data-module="${id}"]`).forEach(cb => { cb.checked = false; });
+        if (bar) bar.classList.remove('done');
+        if (sideBtn) sideBtn.classList.remove('done');
+        showToast('⚠️ Could not save your progress — check your connection and try again');
+    }
     await updateProgress();
 }
 
 window.toggleModule = async function(cb) {
     const id = cb.dataset.module;
-    completed[id] = cb.checked;
-    if (!cb.checked) delete completed[id];
-    
+    const newState = cb.checked;
+    completed[id] = newState;
+    if (!newState) delete completed[id];
+
     const bar = document.getElementById(`ctbar-${id}`);
-    if (bar) bar.classList.toggle('done', cb.checked);
+    if (bar) bar.classList.toggle('done', newState);
     const sideBtn = document.querySelector(`.sidebar-module-btn[data-module="${id}"]`);
-    if (sideBtn) sideBtn.classList.toggle('done', cb.checked);
-    
-    await saveModuleProgress(id, cb.checked);
-    await updateProgress(); 
-    showToast(cb.checked ? '✓ Module marked complete!' : 'Module unmarked');
+    if (sideBtn) sideBtn.classList.toggle('done', newState);
+
+    const ok = await saveModuleProgress(id, newState);
+    if (!ok) {
+        // Roll back to the last known-saved state so the checkbox never lies about what's saved.
+        if (newState) delete completed[id]; else completed[id] = true;
+        cb.checked = !newState;
+        if (bar) bar.classList.toggle('done', !newState);
+        if (sideBtn) sideBtn.classList.toggle('done', !newState);
+        await updateProgress();
+        showToast('⚠️ Could not save — check your connection and try again');
+        return;
+    }
+    await updateProgress();
+    showToast(newState ? '✓ Module marked complete!' : 'Module unmarked');
 };
 
 // ── VIDEO HANDLING ──

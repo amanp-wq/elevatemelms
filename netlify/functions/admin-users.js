@@ -1,9 +1,14 @@
 const { createClient } = require('@supabase/supabase-js');
-const { sendWelcomeEmail } = require('./mailer');
+const { sendWelcomeEmail, postChatAlert } = require('./mailer');
 
 const SUPABASE_URL = 'https://vvazzmoplwfubfhllnwf.supabase.co';
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ2YXp6bW9wbHdmdWJmaGxsbndmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwOTI1NjMsImV4cCI6MjA5MTY2ODU2M30.pZYjPTsi5Km5OpI02MQMyPEUW9eTLaCJt8cDkFzH05o';
+
+// SECURITY: client-side checks (admin.html) are UI convenience only — anyone
+// holding a valid admin access_token can call this function directly, so the
+// same rules must be enforced here too.
+var EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const ALLOWED_ORIGINS = [
     'https://elevatemelms.netlify.app',
@@ -68,6 +73,7 @@ exports.handler = async (event) => {
         var adminDbError = adminResult.error;
 
         if (adminDbError) {
+            await postChatAlert('admins table lookup (action: ' + action + ')', adminDbError);
             return { statusCode: 500, headers: corsHeaders, body: JSON.stringify({ error: 'Database error: ' + adminDbError.message }) };
         }
 
@@ -84,6 +90,13 @@ exports.handler = async (event) => {
         });
 
         if (action === 'create') {
+            if (!email || !EMAIL_RE.test(email)) {
+                return { statusCode: 400, headers: corsHeaders, body: JSON.stringify({ error: 'Invalid email address' }) };
+            }
+            if (!password || password.length < 8) {
+                return { statusCode: 400, headers: corsHeaders, body: JSON.stringify({ error: 'Password must be at least 8 characters' }) };
+            }
+
             var createResult = await admin.auth.admin.createUser({
                 email: email,
                 password: password,
@@ -91,6 +104,7 @@ exports.handler = async (event) => {
                 user_metadata: { full_name: full_name || '' }
             });
             if (createResult.error) {
+                await postChatAlert('create account for ' + email, createResult.error);
                 return { statusCode: 400, headers: corsHeaders, body: JSON.stringify({ error: createResult.error.message }) };
             }
 
@@ -112,32 +126,38 @@ exports.handler = async (event) => {
         }
 
         if (action === 'delete') {
+            if (!user_id) {
+                return { statusCode: 400, headers: corsHeaders, body: JSON.stringify({ error: 'Missing user_id' }) };
+            }
+
             var deleteResult = await admin.auth.admin.deleteUser(user_id);
             if (deleteResult.error) {
+                await postChatAlert('delete account ' + user_id, deleteResult.error);
                 return { statusCode: 400, headers: corsHeaders, body: JSON.stringify({ error: deleteResult.error.message }) };
             }
             return { statusCode: 200, headers: corsHeaders, body: JSON.stringify({ success: true }) };
         }
 
         if (action === 'reset_password') {
+            if (!user_id) {
+                return { statusCode: 400, headers: corsHeaders, body: JSON.stringify({ error: 'Missing user_id' }) };
+            }
+            if (!password || password.length < 8) {
+                return { statusCode: 400, headers: corsHeaders, body: JSON.stringify({ error: 'Password must be at least 8 characters' }) };
+            }
+
             var resetResult = await admin.auth.admin.updateUserById(user_id, { password: password });
             if (resetResult.error) {
+                await postChatAlert('reset password for ' + user_id, resetResult.error);
                 return { statusCode: 400, headers: corsHeaders, body: JSON.stringify({ error: resetResult.error.message }) };
             }
             return { statusCode: 200, headers: corsHeaders, body: JSON.stringify({ success: true }) };
         }
 
-        if (action === 'list') {
-            var listResult = await admin.auth.admin.listUsers({ perPage: 1000 });
-            if (listResult.error) {
-                return { statusCode: 400, headers: corsHeaders, body: JSON.stringify({ error: listResult.error.message }) };
-            }
-            return { statusCode: 200, headers: corsHeaders, body: JSON.stringify({ users: listResult.data.users }) };
-        }
-
         return { statusCode: 400, headers: corsHeaders, body: JSON.stringify({ error: 'Unknown action' }) };
 
     } catch (err) {
+        await postChatAlert('admin-users function (unexpected exception)', err);
         return { statusCode: 500, headers: corsHeaders, body: JSON.stringify({ error: 'Internal server error: ' + err.message }) };
     }
 };

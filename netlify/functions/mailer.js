@@ -5,7 +5,9 @@ const SITE_URL = process.env.SITE_URL || 'https://elevateme.pro';
 // Alerts go to Google Chat instead of email — if Gmail SMTP itself is broken,
 // an email-based alert would never arrive. Failure here is intentionally
 // swallowed so a broken webhook never blocks the caller's real error handling.
-async function alertEmailFailure(context, error) {
+// Shared across admin-users.js (account create/delete/reset-password failures)
+// and this file's own welcome-email failures.
+async function postChatAlert(context, error) {
     const webhookUrl = process.env.GOOGLE_CHAT_WEBHOOK_URL;
     if (!webhookUrl) return;
     try {
@@ -13,7 +15,7 @@ async function alertEmailFailure(context, error) {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                text: `🚨 ElevateMe welcome email failed\nContext: ${context}\nError: ${error && error.message ? error.message : error}`
+                text: `🚨 ElevateMe admin action failed\nContext: ${context}\nError: ${error && error.message ? error.message : error}`
             })
         });
     } catch (e) {
@@ -40,7 +42,7 @@ async function sendWelcomeEmail({ email, password, full_name }) {
     const transport = getTransport();
     if (!transport) {
         console.warn('Mailer: SMTP env vars not set, skipping welcome email');
-        await alertEmailFailure(`welcome email to ${email}`, 'SMTP env vars not configured');
+        await postChatAlert(`welcome email to ${email}`, 'SMTP env vars not configured');
         return { sent: false, reason: 'smtp_not_configured' };
     }
 
@@ -70,11 +72,11 @@ async function sendWelcomeEmail({ email, password, full_name }) {
             html: html
         });
     } catch (error) {
-        await alertEmailFailure(`welcome email to ${email}`, error);
+        await postChatAlert(`welcome email to ${email}`, error);
         throw error; // preserve existing behavior: caller still sees/logs the failure
     }
 
     return { sent: true };
 }
 
-module.exports = { sendWelcomeEmail };
+module.exports = { sendWelcomeEmail, postChatAlert };
