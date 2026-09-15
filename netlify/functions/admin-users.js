@@ -108,11 +108,20 @@ exports.handler = async (event) => {
                 return { statusCode: 400, headers: corsHeaders, body: JSON.stringify({ error: createResult.error.message }) };
             }
 
-            await admin.from('profiles').upsert({
+            var profileResult = await admin.from('profiles').upsert({
                 id: createResult.data.user.id,
                 email: email,
                 full_name: full_name || ''
             }, { onConflict: 'id' });
+
+            if (profileResult.error) {
+                // Roll back the Auth user rather than leaving a login-capable
+                // account that's invisible on the admin dashboard (admin.html
+                // only lists students via the profiles table).
+                await admin.auth.admin.deleteUser(createResult.data.user.id);
+                await postChatAlert('profile creation for ' + email + ' (auth user rolled back)', profileResult.error);
+                return { statusCode: 500, headers: corsHeaders, body: JSON.stringify({ error: 'Account setup failed, please try again: ' + profileResult.error.message }) };
+            }
 
             var emailResult = { sent: false };
             try {
